@@ -123,11 +123,36 @@ that we just bundled together into a single C++ library for convenience.
 We compile our C++ code to Wasm using the [Emscripten toolchain](https://emscripten.org/) to create Javascript-visible bindings.
 This allows our Javascript code to easily call C++ functions and interact with instances of C++ classes via Wasm.
 Compilation is largely painless though some adjustment is required to deal with the (mostly security-related) constraints of the browser.
-In particular, code involving file input required some refactoring as the browser does not allow applications to directly access the file system.
+In particular, code involving file input requires some refactoring as the browser does not allow applications to directly access the filesystem.
 Some additional gymnastics were required to enable multi-threading support with shared memory _(a single-threaded version of the application is also available)._
 
+# Technical details
+
+## Passing data to/from Wasm
+
 To pass input arrays from Javascript to Wasm, we allocate a buffer on the Wasm heap with Javascript, bind that buffer to a `TypedArray` view and fill it with the input values.
-The offset is then passed as an integer to the Wasm binary, which is cast to a pointer of the relevant type to access the data at that location.
+The offset is passed as an integer to the Wasm binary, which is cast to a pointer of the relevant type to access the data at that location.
 To pass results to Javascript, we typically return a persistent instance of a C++ class with methods to return `TypedArray` views of a contiguous array. 
 This is convenient as it does not require the Javascript code to know the size and number of the output arrays ahead of time.
 In both cases, the Javascript code must free the relevant memory after use to avoid a memory leak.
+
+In general, it is best to assume that the `TypedArray` views do not remain valid after any allocations on the Wasm heap.
+This is because allocations may trigger heap growth, which in turn causes the heap to relocate.
+Any offsets from the start of the heap remain valid but any existing views will now be pointing to invalid memory addresses.
+We err on the side of caution and always create a new view before attempting to read or write to a heap location;
+or, for results, copy the values into a regular `TypedArray` for later consumption.
+
+## Creating layered sparse matrices
+
+To reduce memory usage for large single-cell count matrices, we use a "layered matrix" approach that splits the input matrix by row into 3 sparse submatrices.
+The first, second and third submatrices contain data for genes where all non-zero counts can fit into 8-bit, 16-bit and 32-bit unsigned integers, respectively.
+This improves memory efficiency as large datasets generally have low coverage and can be mostly represented as 8-bit integers.
+The same strategy is applied to row indices for non-zero elements in a sparse matrix; most datasets with fewer than 60,000 genes can be accommodated with 16-bit integers.
+This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset with 30,000 genes and 100,000 cells at 5% density requires around 500 MB of memory, which is entirely reasonable. 
+
+The layered matrix representation is implemented through the delayed binding mechanism in **tatami**.
+Specifically, we create the individual sparse submatrices and then create an abstract represention of the full matrix where the submatrices are combined by row.
+This preserves the memory-efficient representation while presenting an interface that mimics that of a single matrix.
+The layered representation can then be seamlessly used with all existing code compatible with the **tatami** interface.
+(Most of which is in the **libscran** package.)
+Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.
