@@ -12,7 +12,7 @@ author:
 We do it. 
 You do it. 
 Everyone does it.
-No, it's not cocaine, we're talking about single-cell RNA sequencing (scRNA-seq).
+No, not cocaine; we're talking about single-cell RNA sequencing (scRNA-seq).
 As its name suggests, this technology enables us to study the gene expression of cell populations at the level of the constituent cells.
 This enables researchers to easily characterize cell subpopulations without requiring any prior knowledge.
 No longer do we have to painstakingly purify each subpopulation for RNA sequencing of bulk populations;
@@ -84,7 +84,50 @@ _The mean-variance trend is displayed on a scatter plot where genes of interest 
 The t-SNE and UMAP plots are animated and show the evolution of the embedding as it is computed across iterations.
 These plots also support brushing to define custom subpopulations for further use in marker detection.
 
-# Using WebAssembly for efficient compute
+# Efficient compute with WebAssembly
 
+WebAssembly (Wasm) is a standard instruction format that serves as a web-executable compilation target for higher-level languages like C/C++, Go and Rust.
+In other words, code written in a language like C++ can be compiled to Wasm and embedded inside a web application for execution by the browser at near-native performance. 
+This provides an opportunity to turn the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis.
+Indeed, we were greatly inspired by the [**biowasm**](https://github.com/biowasm) project, which provides Wasm binaries for common genomics tools like `samtools` and `bedtools`. 
+This inspiration was not so much from the code itself, but from the hope that it offered: after all, if someone managed to compile HTSlib to Wasm, it should be possible to compile anything to Wasm.
 
-# Something about 
+To this end, we collected C++ implementations of the algorithms required for each analysis step.
+Most of the code was harvested from existing R packages, with varying levels of difficulty to convert them into a pure C++ library.
+A list of the relevant libaries and their origins follows:
+
+- The [**tatami**](https://github.com/LTLA/tatami) library provides an abstract interface to different matrix classes, focusing on row and column extraction.
+While it supports the usual dense and sparse representations, its key feature is its support for delayed operations,
+mimicking the [**DelayedArray**](https://bioconductor.org/packages/DelayedArray) Bioconductor package.
+This allows the creation of log-normalized matrices and HVG submatrices with no extra memory usage.
+- The [**knncolle**](https://github.com/LTLA/knncolle) library wraps a number of nearest neighbor detection methods in a consistent interface.
+This includes exact methods like vantage point tree search as well as approximate methods like [**Annoy**](https://github.com/spotify/Annoy).
+It is an equivalent to the [**BiocNeighbors**](https://github.com/LTLA/BiocNeighbors) Bioconductor package.
+- The [**CppIrlba**](https://github.com/LTLA/CppIrlba) library contains a C++ port of the IRLBA algorithm for approximate PCA,
+enabling us to obtain the top few PCs in a highly efficient manner.
+The code here was ported from the [**irlba**](https://github.com/bwlewis/irlba) package, with some refactoring to eliminate dependencies on R-specific libraries.
+- The [**CppKmeans**](https://github.com/LTLA/CppKmeans) library contains C++ implementations of the Hartigan-Wong and Lloyd algorithms for k-means clustering.
+In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's `kmeans` function.
+- The [**CppWeightedLowess**](https://github.com/LTLA/CppWeightedLowess) package contains a C++ implementation of the `weightedLowess` function in the [**limma**](https://bioconductor.org/packages/limma) package.
+This is a variant of the standard LOWESS implementation from R's `lowess` function, modified so that the weights are allowed to influence both the span calculation and the linear regression.
+- The [**qdtsne**](https://github.com/LTLA/qdtsne) library contains an implementation of the Barnes-Hut t-SNE algorithm.
+This is mostly a refactored version of the code in the [**Rtsne**](https://cran.r-project.org/web/packages/Rtsne/index.html) package, itself refactored from the code provided with the original paper.
+Some additional optimizations have been applied to improve scalability.
+- The [**umappp**](https://github.com/LTLA/umappp) library provides an implementation of the UMAP dimensionality reduction algorithm.
+This is largely derived from code in the [**uwot**](https://cran.r-project.org/web/packages/uwot/index.html) package.
+- The [**libscran**](https://github.com/LTLA/libscran) library implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
+The code here originates from an assortment of Bioconductor packages - 
+namely, [**scran**](https://bioconductor.org/packages/scran), [**scuttle**](https://bioconductor.org/packages/scuttle) and [**scater**](https://bioconductor.org/packages/scater) -
+that we just bundled together into a single C++ library for convenience. 
+
+We compile our C++ code to Wasm using the [Emscripten toolchain](https://emscripten.org/) to create Javascript-visible bindings.
+This allows our Javascript code to easily call C++ functions and interact with instances of C++ classes via Wasm.
+Compilation is largely painless though some adjustment is required to deal with the (mostly security-related) constraints of the browser.
+In particular, code involving file input required some refactoring as the browser does not allow applications to directly access the file system.
+Some additional gymnastics were required to enable multi-threading support with shared memory _(a single-threaded version of the application is also available)._
+
+To pass input arrays from Javascript to Wasm, we allocate a buffer on the Wasm heap with Javascript, bind that buffer to a `TypedArray` view and fill it with the input values.
+The offset is then passed as an integer to the Wasm binary, which is cast to a pointer of the relevant type to access the data at that location.
+To pass results to Javascript, we typically return a persistent instance of a C++ class with methods to return `TypedArray` views of a contiguous array. 
+This is convenient as it does not require the Javascript code to know the size and number of the output arrays ahead of time.
+In both cases, the Javascript code must free the relevant memory after use to avoid a memory leak.
