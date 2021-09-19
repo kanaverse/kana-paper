@@ -41,7 +41,7 @@ One aspect of existing scRNA-seq GUIs is that they are primarily interfaces to a
 This is a pragmatic design that re-uses existing analysis software but introduces a number of additional complexities.
 Deployment of the application is more problematic as the backend must be configured and kept available for the lifetime of the application.
 This is not necessarily easy or cheap, especially if the application needs to scale to an arbitrarily large number of users.
-The need for constant communication with the server introduces extra latency that can cause the interactive experience to deteriorate.
+The need for constant communication with the backend introduces extra latency that can cause the interactive experience to deteriorate.
 Questions of data ownership and privacy also arise when data is transferred to someone else's server, potentially leading to bonus-deflating fines under regulations like the CCPA and GDPR.
 
 Our solution to all these problems is to simply create a web application that performs the analysis directly on the user's computer. 
@@ -156,3 +156,17 @@ This preserves the memory-efficient representation while presenting an interface
 The layered representation can then be seamlessly used with all existing code compatible with the **tatami** interface.
 (Most of which is in the **libscran** package.)
 Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.
+
+## Enabling multi-threading
+
+We implement multi-threading for key analysis steps through Emscripten's implementation of the standard `pthreads` library.
+When a new thread is requested in the C++ code, the implementation will pass the task to a Web Worker for execution.
+Data is easily shared across threads by storing the Wasm heap on a `SharedArrayBuffer`.
+This allows us to exploit the existing capabilities of the browser to easily distribute tasks across threads;
+we do so for time-consuming steps such as nearest neighbor detection and _matrix multiplication_.
+
+That said, the use of the `SharedArrayBuffer` is not completely straightforward. 
+The browser does not allow web applications to use `SharedArrayBuffer`s unless they are in a secure context.
+In practical terms, this involves attaching certain HTTP headers when serving the application to isolate it from other pages.
+However, the need for additional headers requires some more configuration on the site server, which may not be possible for public hosting platforms like GitHub Pages.
+_For these use cases, we also provide a single-threaded version of the application that sacrifices performance for ease of deployment._
