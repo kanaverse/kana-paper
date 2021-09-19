@@ -70,4 +70,21 @@ Each cluster is characterized by performing differential expression analyses to 
 7. Most importantly, we generate our Figure 1 by performing further dimensionality reduction on the top PCs.
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP).
 
-The statistical and scientific rationale behind each of these steps is discussed in more detail in the [OSCA book](https://bioconductor.org/books/release/OSCA/) and we shall not discuss it further here.
+The statistical and scientific rationale behind each of these steps is discussed in more detail in the [OSCA book](https://bioconductor.org/books/release/OSCA/).
+
+At each step, **scran.js** allows users to easily customize key parameters.
+For example, we can adjust the thresholds used for the QC filters, the number of HVGs and top PCs, the granularity of the clustering, and more.
+_When the parameters are modified for any step, all subsequent steps are easily re-executed to determine the effect of the change._
+_Customized parameters can be saved into a URL bookmark that can be used to restore an existing custom analysis._
+_Alternatively, the entire customized analysis and its results can be exported to a set of static files (HTML and CSVs) for further sharing._
+
+Where relevant, each step provides an appropriate interactive visualization of the results.
+QC metric distributions are visualized with violin plots where the thresholds can be manually adjusted by moving the filter up or down.
+_The mean-variance trend is displayed on a scatter plot where genes of interest can be highlighed for closer inspection on a linked table._
+The t-SNE and UMAP plots are animated and show the evolution of the embedding as it is computed across iterations.
+These plots also support brushing to define custom subpopulations for further use in marker detection.
+
+# Using WebAssembly for efficient compute
+
+
+# Something about 
