@@ -72,6 +72,11 @@ This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and 
 
 The statistical and scientific rationale behind each of these steps is discussed in more detail in the [OSCA book](https://bioconductor.org/books/release/OSCA/).
 
+Readers can test out the **scran.js** application [here](https://jkanche.com/scran.js/app/app) with some sample datasets or their own data.
+In the latter case, it is important to note that the data never leaves the user's machine.
+The only file transfer that occurs is the download of the web application, in the form of HTML and related files from the hosting server/network.
+All computation is efficiently performed in the browser using Javascript and WebAssembly.
+
 At each step, **scran.js** allows users to easily customize key parameters.
 For example, we can adjust the thresholds used for the QC filters, the number of HVGs and top PCs, the granularity of the clustering, and more.
 _When the parameters are modified for any step, all subsequent steps are easily re-executed to determine the effect of the change._
