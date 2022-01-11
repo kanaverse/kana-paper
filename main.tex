@@ -2,6 +2,7 @@
 \title{kana: single-cell data analysis in the browser}
 \usepackage{authblk}
 \usepackage{hyperref}
+\usepackage{graphicx}
 
 \author[1]{Aaron Lun}
 \affil[1]{Genentech, Inc. South San Francisco, CA}
@@ -49,12 +50,44 @@ Each cluster is characterized through differential expression analyses to detect
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP).
 \end{enumerate}
 
-At each step, users can easily customize key parameters.
-For example, we can adjust the thresholds used for the QC filters, the number of HVGs and top PCs, the granularity of the clustering, and more.
+At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
+For example, we can adjust the QC thresholds, the number of HVGs and top PCs, the granularity of the clustering, and more.
 When parameters are modified for any step, all subsequent steps are automatically re-executed to propagate the change to downstream results.
 Conversely, we do not rerun any steps upstream of the change to avoid unnecessary recomputation and reduce latency.
 
-\section{Client-side scRNA-seq computation}
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{screenshots/analysis.png}
+\end{center}
+\caption{Screenshot showing the analysis configuration panel in the \code{kana} application.
+Clicking ``Analyze" will perform the entire analysis.}
+\label{screenshot:analysis}
+\end{figure}
+
+Once the analysis is complete, \code{kana} presents the results in a multi-panel layout (Figure \ref{screenshot:results}).
+This contains visualizations for the low-dimensional embeddings, marker tables and a gallery of additional plots.
+If a user makes a selection on the embedding, \code{kana} will dynamically compute marker statistics for the selected subset of cells, which can then be viewed on the table.
+Conversely, a gene can be selected in the table to color the embedding by its expression. 
+Users can also save specific views of the embeddings into the gallery for later perusal.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=\textwidth]{screenshots/results.png}
+\end{center}
+\caption{Screenshot showing the multi-panel layout for results in the \code{kana} application.
+The top-left panel is used for the low-dimensional embeddings, where each cell is a point that can be colored by cluster identity or gene expression.
+The right panel contains the marker table for a selected cluster, where genes are ranked and filtered according to the magnitude of upregulation over other clusters.
+The bottom-left panel contains a gallery of miscellaneous plots.}
+\label{screenshot:results}
+\end{figure}
+
+When finished, users have two choices for exporting their analysis results - saving to file, or saving to the browser cache.
+This first approach packages the analysis parameters, results and input files into a single file that can be shared with collaborators.
+Reloading this file will restore the application's analysis state, even on a different computer.
+The second approach will save the analysis parameters, results and input files into the browser cache.
+This avoids the hassle of keeping track of files but only allows reloading on the same computer.
+
+\section{Client-side computation}
 
 \subsection{Efficient compute with WebAssembly}
 
@@ -117,6 +150,8 @@ The layered representation can then be seamlessly used with all existing code co
 Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.
 
 % Need to add memory usage here.
+
+\section{Interface }
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
