@@ -5,8 +5,7 @@
 
 \author[1]{Aaron Lun}
 \affil[1]{Genentech, Inc. South San Francisco, CA}
-\author[2]{Jayaram Kancherla}
-\affil[2]{Genentech, Inc. South San Francisco, CA}
+\author[1]{Jayaram Kancherla}
 
 \begin{document}
 \maketitle
@@ -55,16 +54,17 @@ For example, we can adjust the thresholds used for the QC filters, the number of
 When parameters are modified for any step, all subsequent steps are automatically re-executed to propagate the change to downstream results.
 Conversely, we do not rerun any steps upstream of the change to avoid unnecessary recomputation and reduce latency.
 
-\section{Efficient compute with WebAssembly}
+\section{Client-side scRNA-seq computation}
+
+\subsection{Efficient compute with WebAssembly}
 
 WebAssembly (Wasm) is an instruction format that provdes a web-executable compilation target for languages like C/C++, Go and Rust.
 This allows us to turn the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis (cite biowasm here).
 To do so, we collected C++ implementations of the algorithms required for each analysis step:
 
 \begin{itemize}
-\item The \code{tatami} library \cite{tatami} provides an abstract interface to different matrix classes, focusing on row and column extraction.
-While it supports the usual dense and sparse representations, its key feature is its support for delayed operations,
-mimicking the \code{DelayedArray} package from Bioconductor \cite{delayedarray}.
+\item The \code{tatami} library \cite{tatami} provides an abstract interface to different matrix classes, based on the concepts in the \code{beachmat} package \cite{lun2018beachmat}. 
+In addition to the usual dense and sparse representations, \code{tatami} also supports the delayed operations implemented in the \code{DelayedArray} package \cite{delayedarray}.
 This allows the creation of log-normalized matrices and HVG submatrices with no extra memory usage.
 \item The \code{knncolle} library \cite{knncolle} wraps a number of nearest neighbor detection methods in a consistent interface.
 This includes exact methods like vantage point tree search as well as approximate methods like Annoy \cite{annoy}.
@@ -84,10 +84,39 @@ This is largely derived from code in the \code{uwot} package \cite{uwot}.
 The code here originates from the \code{scran}, \code{scuttle} and \code{scater} packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
 \end{itemize}
 
-We compiled our C++ code to Wasm using the [Emscripten toolchain](https://emscripten.org/) to create Javascript-visible bindings.
-This allows our Javascript code to easily call C++ functions and interact with instances of C++ classes via Wasm.
+We created the \code{scran.js} library (\url{https://github.com/jkanche/scran.js}) to implement Javascript-visible bindings to the C++ libraries.
+We then compiled our C++ code to Wasm using the Emscripten toolchain, allowing \code{kana} to perform scRNA-seq-related calculations via standard calls to \code{scran.js} functions.
+The same library can also be used in other web applications or outside the browser if an appropriate Wasm runtime is available.
 
 % NEED TO ADD TIMINGS.
+
+\subsection{Parallelization with Web Workers}
+
+Web Workers are a simple mechanism for parallelization inside the browser.
+They are primarily used for running background tasks in other threads so that the UI on the main thread can respond to user interaction.
+In addition to this role, we use Web Workers for coarse-grained parallelization to speed up the scRNA-seq calculations.
+Where possible, we parallelize within each step by using Emscripten to compile our C++ code with PThreads support.
+This implements POSIX threads as Web Workers, allowing for transparent parallelization during calculation of QC metrics, nearest neighbor detection and marker scoring.
+We also parallelize across steps by manually creating separate Web Workers for the execution of each step.
+This is possible for the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
+
+% Talk about service workers here.
+
+\subsection{Creating layered sparse matrices}
+
+To reduce memory usage for large single-cell count matrices, we use a ``layered matrix" approach that splits the input matrix by row into 3 sparse submatrices.
+The first, second and third submatrices contain data for genes where all non-zero counts can fit into 8-bit, 16-bit and 32-bit unsigned integers, respectively.
+This improves memory efficiency as large datasets generally have low coverage and can be mostly represented as 8-bit integers.
+The same strategy is applied to row indices for non-zero elements in a sparse matrix; most datasets with fewer than 60,000 genes can be accommodated with 16-bit integers.
+This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset with 30,000 genes and 100,000 cells at 5\% density requires around 500 MB of memory.
+
+The layered matrix representation is implemented through the delayed binding mechanism in \code{tatami}.
+Specifically, we create the individual sparse submatrices and then create an abstract represention of the full matrix where the submatrices are combined by row.
+This preserves the memory-efficient representation while presenting an interface that mimics that of a single matrix.
+The layered representation can then be seamlessly used with all existing code compatible with the \code{tatami} interface.
+Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.
+
+% Need to add memory usage here.
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
