@@ -133,7 +133,13 @@ This implements POSIX threads as Web Workers, allowing for transparent paralleli
 We also parallelize across steps by manually creating separate Web Workers for the execution of each step.
 This is possible for the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
 
-% Talk about service workers here.
+A minor complication with using PThreads is that we need to enable cross-origin isolation on the \code{kana} site.
+Briefly, this is a security measure that prevents inappropriate data access from malicious scripts in the same browsing context.
+Once cross-origin isolated, the site is permitted to use the \code{SharedArrayBuffer} for copy-free transfer of data between Web Workers.
+To achieve this, we need to serve the \code{kana} assets with the appropriate cross-origin headers (specifically, the embedder and opener policies).
+However, this may not always be possible, e.g., when hosting on institutional sites or public sites such as GitHub Pages.
+Instead, we use a service worker to cache and re-serve \code{kana} with the correct headers,
+ensuring that it can be easily deployed in a range of hosting environments.
 
 \subsection{Creating layered sparse matrices}
 
