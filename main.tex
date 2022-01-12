@@ -64,28 +64,24 @@ Clicking ``Analyze" will perform the entire analysis.}
 \label{screenshot:analysis}
 \end{figure}
 
-Once the analysis is complete, \code{kana} presents the results in a multi-panel layout (Figure \ref{screenshot:results}).
-This contains visualizations for the low-dimensional embeddings, marker tables and a gallery of additional plots.
-If a user makes a selection on the embedding, \code{kana} will dynamically compute marker statistics for the selected subset of cells, which can then be viewed on the table.
-Conversely, a gene can be selected in the table to color the embedding by its expression. 
-Users can also save specific views of the embeddings into the gallery for later perusal.
+Once each step of the analysis is complete, \code{kana} visualizes its results in a multi-panel layout (Figure \ref{screenshot:results}).
+One panel contains a scatter plot for the low-dimensional embeddings, where each cell is a point that is colored by cluster identity or gene expression.
+Another panel contains a table of marker statistics for a selected cluster, where potential marker genes are ranked and filtered according to the magnitude of upregulation over other clusters.
+We also have a gallery to visualize miscellaneous details such as the distribution of QC metrics.
 
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[width=\textwidth]{screenshots/results.png}
 \end{center}
 \caption{Screenshot showing the multi-panel layout for results in the \code{kana} application.
-The top-left panel is used for the low-dimensional embeddings, where each cell is a point that can be colored by cluster identity or gene expression.
-The right panel contains the marker table for a selected cluster, where genes are ranked and filtered according to the magnitude of upregulation over other clusters.
-The bottom-left panel contains a gallery of miscellaneous plots.}
+The top-left panel is used for the low-dimensional embeddings,
+the right panel contains the marker table for a selected cluster,
+and the bottom-left panel contains a gallery of miscellaneous plots.}
 \label{screenshot:results}
 \end{figure}
 
-When finished, users have two choices for exporting their analysis results - saving to file, or saving to the browser cache.
-This first approach packages the analysis parameters, results and input files into a single file that can be shared with collaborators.
-Reloading this file will restore the application's analysis state, even on a different computer.
-The second approach will save the analysis parameters, results and input files into the browser cache.
-This avoids the hassle of keeping track of files but only allows reloading on the same computer.
+Finally, users can export the analysis parameters and results for later inspection.
+The exported analysis can be quickly reloaded in a new browser session, allowing users to view the results without repeating the computation.
 
 \section{Client-side computation}
 
@@ -133,10 +129,10 @@ This implements POSIX threads as Web Workers, allowing for transparent paralleli
 We also parallelize across steps by manually creating separate Web Workers for the execution of each step.
 This is possible for the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
 
-A minor complication with using PThreads is that we need to enable cross-origin isolation on the \code{kana} site.
+A minor complication with PThreads is that we need to enable cross-origin isolation on the \code{kana} site.
 Briefly, this is a security measure that prevents inappropriate data access from malicious scripts in the same browsing context.
 Once cross-origin isolated, the site is permitted to use the \code{SharedArrayBuffer} for copy-free transfer of data between Web Workers.
-To achieve this, we need to serve the \code{kana} assets with the appropriate cross-origin headers (specifically, the embedder and opener policies).
+To achieve this, we need to serve the \code{kana} assets with the appropriate cross-origin headers - specifically, the embedder and opener policies.
 However, this may not always be possible, e.g., when hosting on institutional sites or public sites such as GitHub Pages.
 Instead, we use a service worker to cache and re-serve \code{kana} with the correct headers,
 ensuring that it can be easily deployed in a range of hosting environments.
@@ -157,7 +153,53 @@ Note that the genes are permuted from their supplied order, which requires some 
 
 % Need to add memory usage here.
 
-\section{Interface }
+\section{User interface concepts}
+
+\subsection{Interlinked graphics}
+
+Different panels of the \code{kana} application (Figure \ref{screenshot:results}) can share information with each other to facilitate interactive exploration of the dataset.
+For example, we can color the embedding according to the expression of a gene selected from the marker table.
+Upon selection, \code{kana} retrieves the log-normalized expression values for that gene from the sparse matrix and passes this data to the scatter plot for coloring.
+Users can also adjust the color gradient to improve contrast and highlight differences at particular ranges of expression.
+
+A more complex example involves the detection of new marker genes for a custom selection of cells.
+Users can create a custom selection by brushing on regions of interest in the embedding panel.
+If this selection is saved, \code{kana} will perform a differential expression analysis to detect upregulation inside the selection compared to all other cells.
+Statistics for each gene are then shown in the marker table for examination.
+Each custom selection and its statistics are treated as part of the analysis state and are saved during export.
+
+Users can also save specific views of the embeddings into the gallery for later perusal (CIRROCUMULUS).
+This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
+
+\subsection{Progressive rendering}
+
+Each result is immediately rendered on the interface once the corresponding analysis step is complete.
+For example, the distribution of QC metrics appear once the QC step is finished, followed by the plot of the percentage of variance explained once the PCA is done, and so on.
+This improves application performance by avoiding the rendering bottleneck that would otherwise occur all plots were drawn at once. 
+It also serves as a visual progress indicator and improves the user experience by showing meaningful content as soon as possible.
+
+The marker table is a more subtle example of progressive rendering.
+Only the genes in the current view of the table are rendered, with the remaining visual elements being dynamically created as the user scrolls up or down to see other genes in the ranking.
+This ensures that we do not waste time rendering tens of thousands of rows when only the top few are likely to be viewed.
+
+As \code{kana} is doing the analysis in the background, we can actively monitor the change in the embeddings across t-SNE iterations or UMAP epochs.
+We do so by extracting the coordinates at various intervals and rendering them on the embedding panel,
+effectively creating an animation of the embedding as it is refined over time.
+This is mostly provided for entertainment value but may also provide some educational insights into how these embeddings work.
+
+\subsection{Exporting and reloading}
+
+Users can choose to export their analyses to the browser's cache via its in-built \code{IndexedDB} database system.
+This dumps the analysis state (i.e., parameters and results) into a Gzip-compressed JSON inside the cache, along with the input data files.
+Users can then reload their analysis in a new browser session without needing to keep track of any files.
+Moreover, \code{kana} will attempt to deduplicate input files in the cache based on the file name, size and MD5 checksum.
+This reduces disk usage when storing multiple analysis states for the same dataset. 
+
+Alternatively, users may export the analysis state to a file that is downloaded to the their machine.
+This creates a single binary file containing the Gzip-compressed analysis state and the embedded input files.
+Supplying this file to \code{kana} will then restore the previous analysis in the same manner as using the browser cache.
+The benefit of this approach is that files exported by one user can be reloaded by other users on different machines,
+allowing users to easily share their analyses with each other by simply transferring the relevant files.
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
