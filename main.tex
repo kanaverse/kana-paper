@@ -137,6 +137,9 @@ However, this may not always be possible, e.g., when hosting on institutional si
 Instead, we use a service worker to cache and re-serve \code{kana} with the correct headers,
 ensuring that it can be easily deployed in a range of hosting environments.
 
+As a matter of etiquette, we limit \code{kana} to two-thirds of the available threads at maximum utilization.
+The intention is to leave enough resources available for other activities to pass the time while waiting for the analysis to finish.
+
 \subsection{Creating layered sparse matrices}
 
 To reduce memory usage for large single-cell count matrices, we use a ``layered matrix" approach that splits the input matrix by row into 3 sparse submatrices.
@@ -200,6 +203,33 @@ This creates a single binary file containing the Gzip-compressed analysis state 
 Supplying this file to \code{kana} will then restore the previous analysis in the same manner as using the browser cache.
 The benefit of this approach is that files exported by one user can be reloaded by other users on different machines,
 allowing users to easily share their analyses with each other by simply transferring the relevant files.
+
+\section{Discussion}
+
+Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
+Most obviously, we are restricted by the computational resources available on the client machine,
+which can vary from modest (e.g., most laptops) to extremely basic (e.g., mobile devices).
+This limits the size of any single dataset that can be analyzed by a particular client.
+However, in other respects, client-side compute is more scalable than backend compute;
+the former automatically distributes analyses of many datasets across any number of machines at no cost and with no configuration.
+This is especially relevant for web applications like \code{kana} where the maintainers would otherwise be responsible for provisioning backend computing resources.
+One is reminded of the old adage: the cloud might be infinitely scalable but our wallets are not.
+
+That said, how do we deal with large datasets?
+This is not straightforward with the web technologies currently used in \code{kana} - 
+as of time of writing, Wasm is limited to 4 GB of linear memory due to its use of 32-bit pointers.
+Moreover, we limit \code{kana}'s CPU utilitization to ensure that the analysis does not block user activity.
+So, even if the client device has sufficient computational power, \code{kana} would not not able to fully exploit it.
+Fortunately, our use of C++ means that we are not limited to computation in the browser.
+We can easily write wrappers to the same underlying libraries in any client-side framework, e.g., as a command-line tool or as a package for existing data analysis ecosystems.
+For example, the \code{scran.chan} package (\url{https://github.com/LTLA/scran.chan}) allows users to repeat the \code{kana} calculations in an R session,
+where there are no restrictions on memory usage or thread utilization.
+The same approach can be used for other languages that support a foreign function interface like Python or Julia.
+Indeed, one could even run large analyses on a sufficiently provisioned backend, 
+export the analysis state in a \code{kana}-compatible format,
+and then serve the exported state to client machines for inspection in the browser. 
+    
+
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
