@@ -206,6 +206,16 @@ allowing users to easily share their analyses with each other by simply transfer
 
 \section{Discussion}
 
+Single-cell data analysis on the client is not a particularly novel concept.
+In many cases, the dataset already lives on the user's machine, so this is a natural place to perform the analysis with the tool of choice (typically R or Python).
+\code{kana}'s key innovation lies in its use of modern web technologies to perform the analysis directly in the browser.
+This eliminates the difficulties of software installation and makes the analysis accessible to a non-programming audience.
+At the same time, we retain all the benefits of client-side operations.
+Specifically, our availability only depends on the client device, not on a backend server;
+there is no latency from transferring data or results across a network;
+ownership of the dataset clearly remains with the user, avoiding issues with data privacy and associated regulations;
+and compute time is cheap, if not effectively free.
+
 Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
 Most obviously, we are restricted by the computational resources available on the client machine,
 which can vary from modest (e.g., most laptops) to extremely basic (e.g., mobile devices).
