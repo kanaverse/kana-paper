@@ -3,6 +3,7 @@
 \usepackage{authblk}
 \usepackage{hyperref}
 \usepackage{graphicx}
+\usepackage{multirow}
 
 \author[1]{Aaron Lun}
 \affil[1]{Genentech, Inc. South San Francisco, CA}
@@ -92,30 +93,63 @@ This allows us to turn the browser into a compute engine by integrating existing
 To do so, we collected C++ implementations of the algorithms required for each analysis step:
 
 \begin{itemize}
-\item The \code{tatami} library \cite{tatami} provides an abstract interface to different matrix classes, based on the concepts in the \code{beachmat} package \cite{lun2018beachmat}. 
+\item The \code{tatami} library (\url{https://github.com/LTLA/tatami} provides an abstract interface to different matrix classes, 
+based on similar ideas in the \code{beachmat} package \cite{lun2018beachmat}. 
 In addition to the usual dense and sparse representations, \code{tatami} also supports the delayed operations implemented in the \code{DelayedArray} package \cite{delayedarray}.
-This allows the creation of log-normalized matrices and HVG submatrices with no extra memory usage.
-\item The \code{knncolle} library \cite{knncolle} wraps a number of nearest neighbor detection methods in a consistent interface.
-This includes exact methods like vantage point tree search as well as approximate methods like Annoy \cite{annoy}.
+This allows the creation of log-normalized matrices and HVG submatrices with negligible memory usage.
+\item The \code{knncolle} library (\url{https://github.com/LTLA/knncolle} wraps several nearest neighbor detection algorithms in a consistent interface for interchangeable use.
+This includes exact methods like vantage point tree search \cite{yianilos1993data} as well as approximate methods like Annoy \cite{annoy}.
 It is equivalent to the \code{BiocNeighbors} package from Bioconductor \cite{biocneighbors}.
-\item The \code{CppIrlba} library \cite{cppirlba} library contains a C++ port of the IRLBA algorithm \cite{baglama2005augmented} to efficiently obtain the top few PCs.
-The code here was based on the C code in the \code{irlba} package \cite{irlba} with some refactoring to eliminate dependencies on R-specific libraries.
-\item The \code{CppKmeans} library \cite{cppkmeans} contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
+\item The \code{CppIrlba} library (\url{https://github.com/LTLA/CppIrlba} library contains a C++ port of the IRLBA algorithm \cite{baglama2005augmented} to efficiently obtain the top PCs from an input matrix.
+This is based on the C code in the \code{irlba} package \cite{irlba} with some refactoring to eliminate dependencies on R-specific libraries.
+\item The \code{CppKmeans} library (\url{https://github.com/LTLA/CppKmeans} contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
 In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's \code{kmeans} function.
-\item The \code{CppWeightedLowess} library \cite{cppweightedlowess} contains a C++ implementation of the \code{weightedLowess} function in the \code{limma} package \cite{ritchie2015limma}.
-This is based on the LOWESS implementation \cite{cleveland1979robust} from R's \code{lowess} function. 
-\item The \code{qdtsne} library \cite{qdtsne} contains an implementation of the Barnes-Hut t-SNE algorithm \cite{maaten2014accelerating}.
+\item The \code{CppWeightedLowess} library (\url{https://github.com/LTLA/CppWeightedLowess}) contains a C++ port of the \code{weightedLowess} function from the \code{limma} package \cite{ritchie2015limma}.
+This is based on the LOWESS algorithm \cite{cleveland1979robust} implemented in R's \code{lowess} function, 
+modified with the ability to consider weights in the span calculations.
+\item The \code{qdtsne} library (\url{https://github.com/LTLA/qdtsne}) contains a C++ implementation of the Barnes-Hut t-SNE algorithm \cite{maaten2014accelerating}.
 This is mostly a refactored version of the code in the \code{Rtsne} package \cite{rtsne}.
 Some additional optimizations have been applied to improve scalability.
-\item The \code{umappp} library \cite{umappp} provides an implementation of the UMAP algorithm \cite{mcinnes2018umap}.
+\item The \code{umappp} library (\url{https://github.com/LTLA/umappp}) contains a C++ implementation of the UMAP algorithm \cite{mcinnes2018umap}.
 This is largely derived from code in the \code{uwot} package \cite{uwot}.
-\item The \code{libscran} library implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
+\item The \code{libscran} library (\url{https://github.com/LTLA/libscran}) implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
 The code here originates from the \code{scran}, \code{scuttle} and \code{scater} packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
 \end{itemize}
 
-We created the \code{scran.js} library (\url{https://github.com/jkanche/scran.js}) to implement Javascript-visible bindings to the C++ libraries.
-We then compiled our C++ code to Wasm using the Emscripten toolchain, allowing \code{kana} to perform scRNA-seq-related calculations via standard calls to \code{scran.js} functions.
-The same library can also be used in other web applications or outside the browser if an appropriate Wasm runtime is available.
+We created the \code{scran.js} library (\url{https://github.com/jkanche/scran.js}) to provide Javascript bindings to the C++ libraries.
+Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain, allowing \code{kana} to perform scRNA-seq-related calculations via calls to \code{scran.js} functions.
+The same library can also be used in other web applications via a standard \code{npm} installation, or outside the browser if an appropriate Wasm runtime is available.
+
+To evaluate the efficiency of the Wasm runtime, we compared a \code{kana} analysis in the browser to that of a native executable compiled from the same C++ libraries.
+We used the default \code{kana} parameters in both cases, i.e.,
+QC filtering to 3 MADs from the median;
+PCA on the top 2500 HVGs to obtain the top 25 PCs;
+SNN graph construction with 10 neighbors and multi-level community detection at a resolution of 0.5;
+t-SNE with a perplexity of 30;
+and UMAP with 15 neighbors and a minimum distance of 0.01.
+We ran both analyses on a INSERT SPECS HERE using 8 Web Workers (for \code{kana}, see below) or OpenMP threads (for the executable).
+\code{kana} timings were obtained using the Chrome browser vXXXX.
+For simplicity, we do not include the time taken to read the dataset from file as this is unrelated to the computation.
+
+% Comment on results here, noting the differences in the compiler toolchain and optimization levels.
+
+\begin{table}
+\caption{Run times for scRNA-seq analyses on several datasets with Wasm or a native executable.
+Values are in seconds with standard errors from 5 runs.}
+\label{tab:times}
+\begin{center}
+\begin{tabular}{l r r r}
+\hline
+Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Wasm} & \multicolumn{1}{c}{Native} \\
+\hline
+ & 3000 \\
+ & 10000 \\
+ & 68000 \\
+ & 250000 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
 % NEED TO ADD TIMINGS.
 
@@ -154,7 +188,27 @@ This preserves the memory-efficient representation while presenting an interface
 The layered representation can then be seamlessly used with all existing code compatible with the \code{tatami} interface.
 Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.
 
+We evaluated the performance of this data structure by recording the memory usage of the analyses in Table \ref{tab:times}.
+
 % Need to add memory usage here.
+\begin{table}
+\caption{Memory usage of \code{kana} during the analysis of several datasets.
+We report the memory usage immediately after the count matrix is loaded, as well as peak usage throughout the entire analysis.
+Values are reported in megabytes.}
+\label{tab:memory}
+\begin{center}
+\begin{tabular}{l r r r}
+\hline
+Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Loaded} & \multicolumn{1}{c}{Peak} \\
+\hline
+ & 3000 \\
+ & 10000 \\
+ & 68000 \\
+ & 250000 \\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
 
 \section{User interface concepts}
 
