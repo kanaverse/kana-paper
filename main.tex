@@ -1,5 +1,5 @@
 \documentclass{article}
-\title{kana: single-cell data analysis in the browser}
+\title{Single-cell data analysis in the browser}
 \usepackage{authblk}
 \usepackage{hyperref}
 \usepackage{graphicx}
@@ -16,18 +16,25 @@
 
 \section{Introduction}
 
+Modern web browsers are sophisticated pieces of software responsible for rendering, scripting, networking, data storage and more.
+New web technologies such as WebAssembly \cite{haas2017bringing} have greatly enhanced browsers' capabilities for intensive computation,
+providing some new opportunities to repurpose the browser as an interactive data analysis tool.
+The idea is to use the browser itself to perform statistical and computational analyses directly on the user's machine - in other words, ``client-side compute" - 
+and then render the results with appropriate visualizations on a interface that is highly familiar to the user.
+
+This paradigm of client-side compute has several advantages over the traditional model of server-side data analysis.
+Most obviously, we do not need a backend server to perform any of the calculations, simplifying deployment and reducing costs.
+As the entire analysis is performed on the client machine, we avoid any data transfer - this reduces latency in the user interface and circumvents concerns over data ownership and privacy.
+Finally, we do not require installation of any data analysis environments like R or Python, ensuring that the analyses are accessible to audiences of varying computational skill.
+
 We present \code{kana}, a web application for single-cell RNA-seq (scRNA-seq) data analysis inside the browser.
 \code{kana} provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
 starting from quality control and finishing with marker detection.
 Users can interactively explore the low-dimensional embeddings, clusterings and marker genes in an intuitive graphical interface that encourages iterative re-analysis.
 Once finished, users can save their analysis and results for later examination or sharing with collaborators.
 
-By taking advantage of new web technologies, \code{kana} can rapidly analyze genomics-scale datasets on the client's machine via any modern browser.
-We do not require installation of any data analysis environments like R or Python, allowing \code{kana} to be used by audiences of varying computational skill.
-We do not need a backend server to perform any of the calculations, simplifying deployment and reducing costs.
-As the entire analysis is performed on the client machine, we avoid any data transfer and associated issues with ownership and privacy.
-
 The \code{kana} application is available now at \url{https://www.jkanche.com/kana}.
+Developers can set up their own deployments by following the instructions at \url{https://github.com/jkanche/kana}.
 
 \section{Application overview}
 
