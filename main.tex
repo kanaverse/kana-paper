@@ -22,16 +22,25 @@ providing new opportunities to repurpose the browser as an interactive data anal
 The idea is to use the browser itself to perform statistical and computational analyses directly on the user's machine, i.e., ``client-side compute". 
 Those analysis results can then be rendered on a web page for convenient visualization and exploration within a familiar interface.
 
-This paradigm of client-side compute has several advantages over the traditional model of server-side data analysis.
+This paradigm of client-side compute in the browser has several advantages over the traditional model of server-side data analysis.
 Most obviously, we do not need a backend server to perform any of the calculations, simplifying deployment and reducing costs.
 As the entire analysis is performed on the client machine, we avoid any data transfer - this reduces latency in the user interface and circumvents concerns over data ownership and privacy.
 Finally, we do not require installation of any data analysis environments like R or Python, ensuring that the analyses are accessible to audiences of varying computational skill.
+
+A modest body of prior work exists to realize these client-side benefits for bioinformatics data analysis.
+The BioJS registry hosts a number of Javascript components \cite{gomez2013biojs} with a focus on DNA and protein sequence analysis.
+The \code{BrowserGenome.org} application performs read alignment and transcript quantification for RNA sequencing data \cite{schmid2015browsergenome}.
+The \code{ubit2} application performs a client-side analysis of single-cell quantitative polymerase chain reaction datasets \cite{fan2017ubit2}.
+However, these are exceptions to the rule; it is much more common to see applications where the browser is used only visualization of results that were computed elsewhere,
+e.g., \cite{megill2021cellxgene}, \cite{chelaru2014epiviz}, (JAY TO PROVIDE EXAMPLES) and every R/Shiny application ever.
+After all, Javascript is not widely recognized as a language for data science, nor is it particularly efficient for such tasks.
 
 We present \code{kana}, a web application for single-cell RNA-seq (scRNA-seq) data analysis inside the browser.
 \code{kana} provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
 starting from quality control and finishing with marker detection.
 Users can interactively explore the low-dimensional embeddings, clusterings and marker genes in an intuitive graphical interface that encourages iterative re-analysis.
 Once finished, users can save their analysis and results for later examination or sharing with collaborators.
+By using technologies like WebAssembly and web workers, we achieve high-performance compute for datasets containing hundreds of thousands of cells.
 
 The \code{kana} application is available now at \url{https://www.jkanche.com/kana}.
 Developers can set up their own deployments by following the instructions at \url{https://github.com/jkanche/kana}.
