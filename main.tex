@@ -18,9 +18,9 @@
 
 Modern web browsers are sophisticated pieces of software responsible for rendering, scripting, networking, data storage and more.
 New web technologies such as WebAssembly \cite{haas2017bringing} have greatly enhanced browsers' capabilities for intensive computation,
-providing some new opportunities to repurpose the browser as an interactive data analysis tool.
+providing new opportunities to repurpose the browser as an interactive data analysis tool.
 The idea is to use the browser itself to perform statistical and computational analyses directly on the user's machine - in other words, ``client-side compute" - 
-and then render the results with appropriate visualizations on a interface that is highly familiar to the user.
+and then provide exploratory interface to renders the results of the analysis in an environment highly familiar to the user.
 
 This paradigm of client-side compute has several advantages over the traditional model of server-side data analysis.
 Most obviously, we do not need a backend server to perform any of the calculations, simplifying deployment and reducing costs.
@@ -48,18 +48,19 @@ HDF5 files are also supported, either using the 10X HDF5 feature barcode matrix 
 Low-quality cells are then defined as those cells with outlier values for any of these metrics and are removed.
 \item We perform scaling normalization based on the library size to remove cell-specific biases.
 This is followed by a log-transformation to obtain log-normalized expression values.
-\item We fit a trend to the per-gene variances with respect to the means, computed from the log-expression vaules.
+\item We fit a trend to the per-gene variances with respect to the means, computed from the log-expression values.
 We sort on the residuals to define a subset of highly variable genes (HVGs). 
 \item We then perform principal components analysis (PCA) on the HVG subset of the log-expression.
 This yields a few top PCs that capture the heterogeneity of the data in a compressed and denoised form.
 \item We apply a variety of clustering techniques on the top PCs to generate discrete subpopulations.
-Each cluster is characterized through differential expression analyses to detect its top markers.
+Each cluster is characterized through differential expression analyses to detect its top markers. We also support many ranking techniques to order the markers genes.
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP).
 \end{enumerate}
 
 At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
-For example, we can adjust the QC thresholds, the number of HVGs and top PCs, the granularity of the clustering, and more.
+For example, we can adjust the QC thresholds, the number of HVGs and top PCs, the granularity of the clustering, and more. 
+Internally, the execution of these steps is encoded as a directed acyclic graph (DAG) to order and organize the dependencies between the steps.
 When parameters are modified for any step, all subsequent steps are automatically re-executed to propagate the change to downstream results.
 Conversely, we do not rerun any steps upstream of the change to avoid unnecessary recomputation and reduce latency.
 
@@ -95,7 +96,7 @@ The exported analysis can be quickly reloaded in a new browser session, allowing
 
 \subsection{Efficient compute with WebAssembly}
 
-WebAssembly (Wasm) is an instruction format that provdes a web-executable compilation target for languages like C/C++, Go and Rust.
+WebAssembly (Wasm) is an instruction format that provides a web-executable compilation target for languages like C/C++, Go and Rust.
 This allows us to turn the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis (cite biowasm here).
 To do so, we collected C++ implementations of the algorithms required for each analysis step:
 
@@ -163,7 +164,7 @@ Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Wasm} & \mult
 \subsection{Parallelization with Web Workers}
 
 Web Workers are a simple mechanism for parallelization inside the browser.
-They are primarily used for running background tasks in other threads so that the UI on the main thread can respond to user interaction.
+They are primarily used for running background tasks in other threads so that the application on the main thread can respond to user interaction.
 In addition to this role, we use Web Workers for coarse-grained parallelization to speed up the scRNA-seq calculations.
 Where possible, we parallelize within each step by using Emscripten to compile our C++ code with PThreads support.
 This implements POSIX threads as Web Workers, allowing for transparent parallelization during calculation of QC metrics, nearest neighbor detection and marker scoring.
@@ -221,8 +222,8 @@ Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Loaded} & \mu
 
 \subsection{Interlinked graphics}
 
-Different panels of the \code{kana} application (Figure \ref{screenshot:results}) can share information with each other to facilitate interactive exploration of the dataset.
-For example, we can color the embedding according to the expression of a gene selected from the marker table.
+Different panels of the \code{kana} application (Figure \ref{screenshot:results}) can share information with each other to facilitate interactive exploration of the dataset and results of the analysis.
+For example, we can color the embeddings according to the expression of a gene selected from the marker table.
 Upon selection, \code{kana} retrieves the log-normalized expression values for that gene from the sparse matrix and passes this data to the scatter plot for coloring.
 Users can also adjust the color gradient to improve contrast and highlight differences at particular ranges of expression.
 
@@ -239,7 +240,7 @@ This is useful for simultaneously viewing multiple plots colored by different ma
 
 Each result is immediately rendered on the interface once the corresponding analysis step is complete.
 For example, the distribution of QC metrics appear once the QC step is finished, followed by the plot of the percentage of variance explained once the PCA is done, and so on.
-This improves application performance by avoiding the rendering bottleneck that would otherwise occur all plots were drawn at once. 
+This improves application performance by avoiding the rendering bottleneck that would otherwise occur when all plots were drawn at once. 
 It also serves as a visual progress indicator and improves the user experience by showing meaningful content as soon as possible.
 
 The marker table is a more subtle example of progressive rendering.
@@ -259,11 +260,25 @@ Users can then reload their analysis in a new browser session without needing to
 Moreover, \code{kana} will attempt to deduplicate input files in the cache based on the file name, size and MD5 checksum.
 This reduces disk usage when storing multiple analysis states for the same dataset. 
 
-Alternatively, users may export the analysis state to a file that is downloaded to the their machine.
+Alternatively, users may export the analysis state to a file that is downloaded to their machine.
 This creates a single binary file containing the Gzip-compressed analysis state and the embedded input files.
 Supplying this file to \code{kana} will then restore the previous analysis in the same manner as using the browser cache.
 The benefit of this approach is that files exported by one user can be reloaded by other users on different machines,
 allowing users to easily share their analyses with each other by simply transferring the relevant files.
+
+\subsubsection{Format of the saved analysis file}
+
+TODO: use a figure to represent the structure
+
+\begin{itemize} 
+\item First 8 bytes specify a 64-bit uinteger in little-endian, specifying the format. Currently its used to denote whether the data files are embedded (0) or linked (1).
+\item Next 8 bytes are 64-bit uinteger specifying the format version.
+\item Next 8 bytes are 64-bit uinteger specifying the size of the blob containing a gzipped JSON with the analysis parameters and results. Let's call this value n.
+\item Next n bytes contain a Gzipped JSON. unzipping this, will contain a property for each step in the analysis and the value is a dictionary with parameters (a dictionary of parameters) and contents (the contents, usually the results).
+\item Remaining bytes contain the embedded input files.
+\end{itemize}
+
+As users interactively analyze, explore and hypothesize, one may parse the saved analysis in other computational environments (R/Python/notebooks environments) to perform more complex analysis.
 
 \section{Discussion}
 
@@ -278,7 +293,7 @@ ownership of the dataset clearly remains with the user, avoiding issues with dat
 and compute time is cheap, if not effectively free.
 
 Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
-Most obviously, we are restricted by the computational resources available on the client machine,
+Most obviously, we are limited by the computational resources available on the client machine,
 which can vary from modest (e.g., most laptops) to extremely basic (e.g., mobile devices).
 This limits the size of any single dataset that can be analyzed by a particular client.
 However, in other respects, client-side compute is more scalable than backend compute;
@@ -292,15 +307,13 @@ as of time of writing, Wasm is limited to 4 GB of linear memory due to its use o
 Moreover, we limit \code{kana}'s CPU utilitization to ensure that the analysis does not block user activity.
 So, even if the client device has sufficient computational power, \code{kana} would not not able to fully exploit it.
 Fortunately, our use of C++ means that we are not limited to computation in the browser.
-We can easily write wrappers to the same underlying libraries in any client-side framework, e.g., as a command-line tool or as a package for existing data analysis ecosystems.
+We can easily provide wrappers to the same underlying libraries in any client-side framework, e.g., as a command-line tool (\url{https://github.com/LTLA/scran-cli}) or as a package for existing data analysis ecosystems.
 For example, the \code{scran.chan} package (\url{https://github.com/LTLA/scran.chan}) allows users to repeat the \code{kana} calculations in an R session,
 where there are no restrictions on memory usage or thread utilization.
 The same approach can be used for other languages that support a foreign function interface like Python or Julia.
 Indeed, one could even run large analyses on a sufficiently provisioned backend, 
 export the analysis state in a \code{kana}-compatible format,
-and then serve the exported state to client machines for inspection in the browser. 
-    
-
+and then serve the exported state to client machines for exploration in the browser. 
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
