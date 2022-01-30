@@ -4,6 +4,7 @@
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{multirow}
+\usepackage{color}
 
 \author[1]{Aaron Lun}
 \affil[1]{Genentech, Inc. South San Francisco, CA}
@@ -13,6 +14,7 @@
 \maketitle
 
 \newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\jay}[1]{\textcolor{red}{#1}}
 
 \section{Introduction}
 
@@ -33,7 +35,7 @@ The \code{BrowserGenome.org} application performs read alignment and transcript 
 while the \code{ubit2} application analyzes single-cell quantitative polymerase chain reaction datasets \cite{fan2017ubit2};
 both use Javascript implementations of the relevant algorithms to run in the browser.
 However, these are exceptions to the rule; most bioinformatics web applications only use the browser to visualize results that were computed elsewhere,
-e.g., \cite{megill2021cellxgene}, \cite{chelaru2014epiviz}, (JAY TO PROVIDE EXAMPLES) and every R/Shiny application ever.
+e.g., \cite{megill2021cellxgene}, \cite{chelaru2014epiviz}, (\jay{JAY TO PROVIDE EXAMPLES}) and every R/Shiny application ever.
 After all, Javascript is not widely recognized as a language for data science, nor is it particularly efficient for such tasks.
 
 The client-side paradigm is especially appealing for single-cell genomics due to the exploratory nature of its data analysis.
@@ -60,19 +62,20 @@ We will not discuss the statistical and scientific rationale behind each step in
 
 \begin{enumerate}
 \item We import a gene-by-cell count matrix from the user's machine, typically in the form of Matrix Market files such as those produced by the Cellranger pipeline.
-HDF5 files are also supported, either using the 10X HDF5 feature barcode matrix format or as H5AD files.
+HDF5 files are also supported, using either the 10X HDF5 feature barcode matrix format or as H5AD files.
 \item We compute common quality control (QC) metrics such as the total count, number of detected genes and proportion of mitochondrial counts.
-Low-quality cells are then defined as those cells with outlier values for any of these metrics and are removed.
+Low-quality cells are defined as those cells with outlier values for any of these metrics; these are filtered out from subsequent steps.
 \item We perform scaling normalization based on the library size to remove cell-specific biases.
-This is followed by a log-transformation to obtain log-normalized expression values.
-\item We fit a trend to the per-gene variances with respect to the means, computed from the log-expression values.
+This is followed by a log-transformation to obtain a matrix of log-normalized expression values.
+\item We fit a LOWESS trend \cite{cleveland1979robust} to the per-gene variances with respect to the means, computed from the log-expression values.
 We sort on the residuals to define a subset of highly variable genes (HVGs). 
-\item We then perform principal components analysis (PCA) on the HVG subset of the log-expression.
+\item We perform principal components analysis (PCA) on the log-expression matrix with the subset of HVGs.
 This yields a few top PCs that capture the heterogeneity of the data in a compressed and denoised form.
-\item We apply a variety of clustering techniques on the top PCs to generate discrete subpopulations.
-Each cluster is characterized through differential expression analyses to detect its top markers.
+\item We apply clustering techniques on the top PCs to generate discrete subpopulations.
+Specifically, we apply multi-level (i.e., ``louvain'') community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
+Each cluster is characterized through differential expression analyses to detect its marker genes.
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
-This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP).
+This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
 \end{enumerate}
 
 At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
@@ -114,49 +117,78 @@ The exported analysis can be quickly reloaded in a new browser session, allowing
 \subsection{Efficient compute with WebAssembly}
 
 WebAssembly (Wasm) is an instruction format that provides a web-executable compilation target for languages like C/C++, Go and Rust.
-This allows us to turn the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis (cite biowasm here).
-To do so, we collected C++ implementations of the algorithms required for each analysis step:
+This allows us to turn the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis -
+see the biowasm project (\url{https://github.com/biowasm/biowasm}) for previous work in this direction.
+For \code{kana}, we collected C++ implementations of the algorithms required for each step:
 
 \begin{itemize}
-\item The \code{tatami} library (\url{https://github.com/LTLA/tatami} provides an abstract interface to different matrix classes, 
+\item The \code{tatami} library (\url{https://github.com/LTLA/tatami}) provides an abstract interface to different matrix classes, 
 based on similar ideas in the \code{beachmat} package \cite{lun2018beachmat}. 
 In addition to the usual dense and sparse representations, \code{tatami} also supports the delayed operations implemented in the \code{DelayedArray} package \cite{delayedarray}.
-This allows the creation of log-normalized matrices and HVG submatrices with negligible memory usage.
-\item The \code{knncolle} library (\url{https://github.com/LTLA/knncolle} wraps several nearest neighbor detection algorithms in a consistent interface for interchangeable use.
+This allows the creation of QC-filtered and log-normalized matrices without any duplication of expression data.
+\item The \code{CppWeightedLowess} library (\url{https://github.com/LTLA/CppWeightedLowess}) contains a C++ port of the \code{weightedLowess} function from the \code{limma} package \cite{ritchie2015limma}.
+This function is, in turn, based on the LOWESS algorithm \cite{cleveland1979robust} implemented in R's \code{lowess} function, 
+modified with the ability to consider weights in the span calculations.
+\item The \code{CppIrlba} library (\url{https://github.com/LTLA/CppIrlba}) library contains a C++ port of the IRLBA algorithm \cite{baglama2005augmented} to efficiently obtain the top PCs from an input matrix.
+This is based on the C code in the \code{irlba} package \cite{irlba} with some refactoring to eliminate R-specific dependencies.
+In particular, we now rely on the Eigen library \cite{eigenweb} for matrix operations.
+%\item The \code{CppKmeans} library (\url{https://github.com/LTLA/CppKmeans}) contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
+%In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's \code{kmeans} function.
+\item The \code{knncolle} library (\url{https://github.com/LTLA/knncolle}) wraps several nearest neighbor detection algorithms in a consistent interface for interchangeable use.
 This includes exact methods like vantage point tree search \cite{yianilos1993data} as well as approximate methods like Annoy \cite{annoy}.
 It is equivalent to the \code{BiocNeighbors} package from Bioconductor \cite{biocneighbors}.
-\item The \code{CppIrlba} library (\url{https://github.com/LTLA/CppIrlba} library contains a C++ port of the IRLBA algorithm \cite{baglama2005augmented} to efficiently obtain the top PCs from an input matrix.
-This is based on the C code in the \code{irlba} package \cite{irlba} with some refactoring to eliminate dependencies on R-specific libraries.
-\item The \code{CppKmeans} library (\url{https://github.com/LTLA/CppKmeans} contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
-In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's \code{kmeans} function.
-\item The \code{CppWeightedLowess} library (\url{https://github.com/LTLA/CppWeightedLowess}) contains a C++ port of the \code{weightedLowess} function from the \code{limma} package \cite{ritchie2015limma}.
-This is based on the LOWESS algorithm \cite{cleveland1979robust} implemented in R's \code{lowess} function, 
-modified with the ability to consider weights in the span calculations.
+\item The \code{libscran} library (\url{https://github.com/LTLA/libscran}) implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
+The code here originates from the \code{scran}, \code{scuttle} and \code{scater} packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
+This library relies on the \code{igraph} C library \cite{csardi2006igraph} for community detection from the SNN graph.
 \item The \code{qdtsne} library (\url{https://github.com/LTLA/qdtsne}) contains a C++ implementation of the Barnes-Hut t-SNE algorithm \cite{maaten2014accelerating}.
 This is mostly a refactored version of the code in the \code{Rtsne} package \cite{rtsne}.
 Some additional optimizations have been applied to improve scalability.
 \item The \code{umappp} library (\url{https://github.com/LTLA/umappp}) contains a C++ implementation of the UMAP algorithm \cite{mcinnes2018umap}.
 This is largely derived from code in the \code{uwot} package \cite{uwot}.
-\item The \code{libscran} library (\url{https://github.com/LTLA/libscran}) implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
-The code here originates from the \code{scran}, \code{scuttle} and \code{scater} packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
 \end{itemize}
 
-We created the \code{scran.js} library (\url{https://github.com/jkanche/scran.js}) to provide Javascript bindings to the C++ libraries.
-Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain, allowing \code{kana} to perform scRNA-seq-related calculations via calls to \code{scran.js} functions.
-The same library can also be used in other web applications via a standard \code{npm} installation, or outside the browser if an appropriate Wasm runtime is available.
+We created the \code{scran.js} library (\url{https://github.com/jkanche/scran.js}) to provide Javascript bindings to these C++ libraries.
+Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain \cite{zakai2011emscripten},
+allowing \code{kana} to perform scRNA-seq-related calculations from Javascript by calling \code{scran.js} functions.
+The same library can also be used in other web applications via a standard NPM installation (\url{https://www.npmjs.com/package/scran.js}),
+or outside the browser if an appropriate Wasm runtime is available.
 
-To evaluate the efficiency of the Wasm runtime, we compared a \code{kana} analysis in the browser to that of a native executable compiled from the same C++ libraries.
-We used the default \code{kana} parameters in both cases, i.e.,
+To evaluate the efficiency of our Wasm strategy, 
+we compared a \code{kana} analysis in the browser to that of a native executable compiled from the same C++ libraries (\url{https://github.com/LTLA/scran-cli}).
+We analyzed several public scRNA-seq datasets (Table \ref{tab:datasets}) using the default \code{kana} parameters for both approaches, i.e.,
 QC filtering to 3 MADs from the median;
 PCA on the top 2500 HVGs to obtain the top 25 PCs;
 SNN graph construction with 10 neighbors and multi-level community detection at a resolution of 0.5;
 t-SNE with a perplexity of 30;
 and UMAP with 15 neighbors and a minimum distance of 0.01.
-We ran both analyses on a INSERT SPECS HERE using 8 Web Workers (for \code{kana}, see below) or OpenMP threads (for the executable).
-\code{kana} timings were obtained using the Chrome browser vXXXX.
-For simplicity, we do not include the time taken to read the dataset from file as this is unrelated to the computation.
+We collected timings on \jay{Jay's Linux laptop} using 8 web workers for \code{kana} (see below) and 8 threads for the executable.
+For convenience, we ran the \code{kana} timings in batch using Puppeteer (\url{https://github.com/puppeteer/puppeteer}) to control a headless Chrome browser (\jay{vXXXX}).
+
+\begin{table}
+\caption{Collection of scRNA-seq datasets used for testing.}
+\label{tab:datasets}
+\begin{center}
+\makebox[\textwidth][c]{
+\begin{tabular}{l l l l r}
+\hline
+Study & Species & Tissue & Technology & \multicolumn{1}{c}{Number of cells} \\
+\hline
+Zeisel \emph{et al.} (2015) \cite{zeisel2015cell} & Mouse & Brain & STRT-seq & 3005 \\
+Paul \emph{et al.} (2015) \cite{paul2015transcriptional} & Mouse & Bone marrow & MARS-seq & 10368 \\
+Bach \emph{et al.} (2017) \cite{bach2017differentiation} & Mouse & Mammary gland & 10x Genomics & 25806 \\
+Ernst \emph{et al.} (2019) \cite{ernst2019staged} & Mouse & Spermatogonia & 10x Genomics & 68937 \\
+Bacher \emph{et al.} (2020) \cite{bacher2020low} & Human & T cells & 10x Genomics & 104417 \\
+Zilionis \emph{et al.} (2019) \cite{zilionis2019single} & Human & Lung & 10x Genomics & 173954 \\
+\hline
+\end{tabular}
+}
+\end{center}
+\end{table}
+
 
 % Comment on results here, noting the differences in the compiler toolchain and optimization levels.
+
+Something about the results.
 
 \begin{table}
 \caption{Run times for scRNA-seq analyses on several datasets with Wasm or a native executable.
@@ -175,8 +207,6 @@ Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Wasm} & \mult
 \end{tabular}
 \end{center}
 \end{table}
-
-% NEED TO ADD TIMINGS.
 
 \subsection{Parallelization with Web Workers}
 
