@@ -208,19 +208,19 @@ Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Wasm} & \mult
 \end{center}
 \end{table}
 
-\subsection{Parallelization with Web Workers}
+\subsection{Parallelization with web workers}
 
-Web Workers are a simple mechanism for parallelization inside the browser.
+Web workers are a simple mechanism for parallelization inside the browser.
 They are primarily used for running background tasks in other threads so that the application's main thread is free to respond to user interaction.
-In addition to this role, we use Web Workers for coarse-grained parallelization to speed up the scRNA-seq calculations.
+In addition to this role, we use web workers for coarse-grained parallelization to speed up the scRNA-seq calculations.
 Where possible, we parallelize within each step by using Emscripten to compile our C++ code with PThreads support.
-This implements POSIX threads as Web Workers, allowing for transparent parallelization during calculation of QC metrics, nearest neighbor detection and marker scoring.
-We also parallelize across steps by manually creating separate Web Workers for the execution of each step.
+This implements POSIX threads as web workers, allowing for transparent parallelization during calculation of QC metrics, nearest neighbor detection and marker scoring.
+We also parallelize across steps by manually creating separate web workers for the execution of each step.
 This is possible for the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
 
 A minor complication with PThreads is that we need to enable cross-origin isolation on the \code{kana} site.
 Briefly, this is a security measure that prevents inappropriate data access from malicious scripts in the same browsing context.
-Once cross-origin isolated, the site is permitted to use the \code{SharedArrayBuffer} for copy-free transfer of data between Web Workers.
+Once cross-origin isolated, the site is permitted to use the \code{SharedArrayBuffer} for copy-free transfer of data between web workers.
 To achieve this, we need to serve the \code{kana} assets with the appropriate cross-origin headers - specifically, the embedder and opener policies.
 However, this may not always be possible, e.g., when hosting on institutional sites or public sites such as GitHub Pages.
 Instead, we use a service worker to cache and re-serve \code{kana} with the correct headers,
