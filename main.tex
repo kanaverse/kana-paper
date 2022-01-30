@@ -297,7 +297,17 @@ This ensures that we do not waste time rendering tens of thousands of rows when 
 As \code{kana} is doing the analysis in the background, we can actively monitor the change in the embeddings across t-SNE iterations or UMAP epochs.
 We do so by extracting the coordinates at various intervals and rendering them on the embedding panel,
 effectively creating an animation of the embedding as it is refined over time.
-This is mostly provided for entertainment value but may also provide some educational insights into how these embeddings work.
+This is mostly provided for entertainment value but may also provide some educational insights into how these embeddings are created.
+
+\subsection{Accelerated graphics with WebGL}
+
+WebGL is a Javascript application programming interface (API) for efficient rendering of interactive graphics in the browser.
+It does so by leveraging the client device's graphics processing unit (GPU) to accelerate the creation of images from data and shader instructions.
+\code{kana} uses the WebGL API to quickly visualize the dimensionality reduction results for hundreds of thousands of cells, each of which must be rendered as a separate point.
+For the animations across t-SNE/UMAP iterations, we observed a frame rate of \jay{XX $\pm$ XX} frames per second (FPS) when using WebGL 
+compared to the \jay{YY $\pm$ YY} FPS with the standard canvas API.
+This improved performance with WebGL contributes to a more comfortable user experience when interacting with the dimensionality reduction plot in \code{kana},
+both in terms of smooth animations across iterations as well as smooth transitions when panning, zooming or selecting points.
 
 \subsection{Exporting and reloading}
 
