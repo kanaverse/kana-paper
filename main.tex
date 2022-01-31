@@ -213,13 +213,11 @@ Zilionis & 173954 &  $\pm$ & $\pm$ \\
 
 \subsection{Parallelization with web workers}
 
-Web workers are a simple mechanism for parallelization inside the browser.
-They are primarily used for running background tasks in other threads so that the application's main thread is free to respond to user interaction.
-In addition to this role, we use web workers for coarse-grained parallelization to speed up the scRNA-seq calculations.
-Where possible, we parallelize within each step by using Emscripten to compile our C++ code with PThreads support.
-This implements POSIX threads as web workers, allowing for transparent parallelization during calculation of QC metrics, nearest neighbor detection and marker scoring.
-We also parallelize across steps by manually creating separate web workers for the execution of each step.
-This is possible for the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
+Web workers provide a simple mechanism for parallelization inside the browser.
+In \code{kana}, a web worker is used to run the compute-intensive analysis in its own thread so that the application's main thread is free to respond to user interaction.
+However, we also use web workers to parallelize the computations within some of the analysis steps by compiling our C++ code with PThreads support.
+This implements POSIX threads as web workers for transparent parallelization across genes or cells during calculation of QC metrics, nearest neighbor detection and marker scoring.
+In addition, we parallelize across steps by manually creating a separate web worker to execute the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
 
 A minor complication with PThreads is that we need to enable cross-origin isolation on the \code{kana} site.
 Briefly, this is a security measure that prevents inappropriate data access from malicious scripts in the same browsing context.
@@ -236,15 +234,16 @@ The intention is to leave enough resources available for other activities to pas
 
 To reduce memory usage for large single-cell count matrices, we use a ``layered matrix" approach that splits the input matrix by row into 3 sparse submatrices.
 The first, second and third submatrices contain data for genes where all non-zero counts can fit into 8-bit, 16-bit and 32-bit unsigned integers, respectively.
-This improves memory efficiency as large datasets generally have low coverage and can be mostly represented as 8-bit integers.
-The same strategy is applied to row indices for non-zero elements in a sparse matrix; most datasets with fewer than 60,000 genes can be accommodated with 16-bit integers.
-This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset with 30,000 genes and 100,000 cells at 5\% density requires around 500 MB of memory.
+This improves memory efficiency as large datasets generally have low sequencing coverage;
+most counts can be represented as 8-bit integers to save space, leaving a few high-abundance genes to be stored in the submatrices with larger integer types.
+A similar strategy is applied to row indices for non-zero elements in a sparse matrix, where most datasets have fewer than 60,000 genes and can be accommodated with 16-bit integers.
+This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset with 30,000 genes and 100,000 cells at 5\% density requires around 500 MB of memory in this data structure.
 
 The layered matrix representation is implemented through the delayed binding mechanism in \code{tatami}.
 Specifically, we create the individual sparse submatrices and then create an abstract represention of the full matrix where the submatrices are combined by row.
 This preserves the memory-efficient representation while presenting an interface that mimics that of a single matrix.
 The layered representation can then be seamlessly used with all existing code compatible with the \code{tatami} interface.
-Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.
+(Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.)
 
 We evaluated the performance of this data structure by recording the memory usage of the analyses in Table \ref{tab:times}.
 
@@ -257,12 +256,14 @@ Values are reported in megabytes.}
 \begin{center}
 \begin{tabular}{l r r r}
 \hline
-Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Loaded} & \multicolumn{1}{c}{Peak} \\
+Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{\code{kana}} & \multicolumn{1}{c}{Native} \\
 \hline
- & 3000 \\
- & 10000 \\
- & 68000 \\
- & 250000 \\
+Zeisel   & 3005   &  & \\
+Paul     & 10368  &  & \\
+Bach     & 25806  &  & \\
+Ernst    & 68937  &  & \\
+Bacher   & 104417 &  & \\
+Zilionis & 173954 &  & \\
 \hline
 \end{tabular}
 \end{center}
@@ -300,7 +301,7 @@ This ensures that we do not waste time rendering tens of thousands of rows when 
 Given that \code{kana} is computing the embeddings in the background, we can actively monitor the change in the coordinates for each cell across t-SNE iterations or UMAP epochs.
 We do so by extracting the coordinates at regular intervals and rendering them on the embedding panel with WebGL,
 effectively creating an animation of the embedding as it is refined over time.
-This is mostly provided for entertainment value but may provide some educational insights into the process of creating the embeddings (e.g., early exaggeration for t-SNE).
+This is mostly present for entertainment value but may provide some educational insights into the process of creating the embeddings (e.g., early exaggeration for t-SNE).
 
 % \subsection{Accelerated graphics with WebGL}
 % 
