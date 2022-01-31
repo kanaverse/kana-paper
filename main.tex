@@ -185,27 +185,30 @@ Zilionis \emph{et al.} (2019) \cite{zilionis2019single} & Human & Lung & 10x Gen
 \end{center}
 \end{table}
 
-%Our results indicate that \code{kana} analyses took approximately 20-30\% more time compared to the native executable (Table \ref{tab:times}).
-%This is consistent with Wasm's promise of near-native execution and is comparable to existing benchmarking results \cite{jangda2019not}.
-%The performance gap can be attributed to the overhead of the Wasm runtime environment in the browser
-%and the differences in optimization levels of the compiler toolchains (Emscripten/Clang for Wasm, GCC for the executable).
-%We note that there are still some opportunities for optimization in our Wasm compilation process -
+Our results indicate that \code{kana} analyses took approximately 50\% longer to run compared to the native executable (Table \ref{tab:times}).
+This is consistent with other benchmarking results \cite{jangda2019not}
+where the performance gap is attributed to Wasm's design constraints and the runtime overhead of the browser's Wasm runtime environment.
+Our native executable was also created with a different compiler toolchain (GCC, instead of LLVM for the Wasm binary),
+where the same nominal optimization level (O3) may have different effects.
+These results suggest that some work may still be required to completely fulfill Wasm's promise of ``near-native execution''.
+Nonetheless, the current performance is largely satisfactory for \code{kana},
+and will likely improve over time as browser implementations evolve along with our understanding of the relevant optimizations.
 
 \begin{table}
 \caption{Analysis run times for several datasets with \code{kana} or a native executable.
 Values are reported in seconds with standard errors from 3 runs.}
 \label{tab:times}
 \begin{center}
-\begin{tabular}{l r r r}
+    \begin{tabular}{l r r@{ $\pm$ }l r@{ $\pm$ }l}
 \hline
-Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{\code{kana}} & \multicolumn{1}{c}{Native} \\
+Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{2}{c}{\code{kana}} & \multicolumn{2}{c}{Native} \\
 \hline
-Zeisel   & 3005   &  $\pm$ & $\pm$ \\
-Paul     & 10368  &  $\pm$ & $\pm$ \\
-Bach     & 25806  &  $\pm$ & $\pm$ \\
-Ernst    & 68937  &  $\pm$ & $\pm$ \\
-Bacher   & 104417 &  $\pm$ & $\pm$ \\
-Zilionis & 173954 &  $\pm$ & $\pm$ \\
+        Zeisel   & 3005   & \jay{  7} &  1 & \jay{  5} &  1 \\
+        Paul     & 10368  & \jay{ 19} &  2 & \jay{ 13} &  2 \\
+        Bach     & 25806  & \jay{ 60} &  5 & \jay{ 44} &  5 \\
+        Ernst    & 68937  & \jay{200} & 10 & \jay{118} & 10 \\
+        Bacher   & 104417 & \jay{285} & 10 & \jay{171} & 10 \\
+        Zilionis & 173954 & \jay{???} & ?? & \jay{180} & 10 \\
 \hline
 \end{tabular}
 \end{center}
@@ -242,32 +245,48 @@ This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset 
 The layered matrix representation is implemented through the delayed binding mechanism in \code{tatami}.
 Specifically, we create the individual sparse submatrices and then create an abstract represention of the full matrix where the submatrices are combined by row.
 This preserves the memory-efficient representation while presenting an interface that mimics that of a single matrix.
-The layered representation can then be seamlessly used with all existing code compatible with the \code{tatami} interface.
+The layered representation can then be seamlessly used with all C++ code compatible with the \code{tatami} interface.
 (Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.)
 
-We evaluated the performance of this data structure by recording the memory usage of the analyses in Table \ref{tab:times}.
+\subsection{Examining memory usage}
 
-% Need to add memory usage here.
+As an additional evaluation, we recorded the memory usage of the \code{kana} analyses (Table \ref{tab:times}).
+For \code{kana}, we used the final size of the Wasm heap as a convenient proxy for the peak memory used by the application.
+This omits some memory usage on the Javascript side but should capture the most memory-intensive data structures, particularly the count matrix.
+For comparison, we also recorded the maximum resident set size after each run of the native executable.
+In all cases, memory usage with Wasm was \jay{comparable to that of the native executable} and maintained below 3 gigabytes,
+which is reasonable for a client device.
+
 \begin{table}
-\caption{Memory usage of \code{kana} during the analysis of several datasets.
-We report the memory usage immediately after the count matrix is loaded, as well as peak usage throughout the entire analysis.
-Values are reported in megabytes.}
+    \caption{Memory usage of \code{kana} or a native executable when analyzing datasets from Table \ref{tab:datasets}.
+Values are reported in megabytes with standard errors from 3 runs.
+The number of non-zero elements for each dataset is also shown in millions.}
 \label{tab:memory}
 \begin{center}
-\begin{tabular}{l r r r}
+    \begin{tabular}{l r r r@{ $\pm$ }l r@{ $\pm$ }l}
 \hline
-Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{\code{kana}} & \multicolumn{1}{c}{Native} \\
+        Dataset & \multicolumn{1}{c}{Cells} & \multicolumn{1}{c}{Non-zeros} & \multicolumn{2}{c}{\code{kana}} & \multicolumn{2}{c}{Native} \\
 \hline
-Zeisel   & 3005   &  & \\
-Paul     & 10368  &  & \\
-Bach     & 25806  &  & \\
-Ernst    & 68937  &  & \\
-Bacher   & 104417 &  & \\
-Zilionis & 173954 &  & \\
+        Zeisel   & 3005  &  11.3 & \jay{??} & ? & \jay{ 160} & 0 \\
+        Paul     & 10368 &  11.9 & \jay{??} & ? & \jay{ 313} & 0 \\
+        Bach     & 25806 &  61.2 & \jay{??} & ? & \jay{ 988} & 0 \\
+        Ernst    & 68937 & 163.1 & \jay{??} & ? & \jay{2572} & 0 \\
+        Bacher   & 104417& 143.0 & \jay{??} & ? & \jay{2496} & 0 \\
+        Zilionis & 173954&  53.7 & \jay{??} & ? & \jay{2663} & 0 \\
 \hline
 \end{tabular}
 \end{center}
 \end{table}
+
+Importantly, \code{kana}'s memory usage lies below Wasm's hard limit of 4 gigabytes of addressable memory.
+This limit is a consequence of the use of 32-bit pointers in the current Wasm specification,
+and exceeding this limit will cause allocation errors and application failure.
+Future Wasm releases may support 64-bit pointers (see \url{https://github.com/WebAssembly/memory64} for the relevant proposal)
+at which point \code{kana} will be able to process larger datasets.
+
+As an aside, memory usage across datasets in Table \ref{tab:memory} is more strongly associated with the number of cells than the number of non-zero elements.
+This indicates that the our count matrix is small enough (in its layered sparse form) that it is not the major cause of memory usage in \code{kana}.
+Rather, usage seems to be mostly driven by intermediates and results created in the analysis steps.
 
 \section{User interface concepts}
 
@@ -350,18 +369,25 @@ This is especially relevant for web applications like \code{kana} where the main
 The cloud might be infinitely scalable but - unfortunately - our back accounts are not.
 
 That said, how do we deal with large datasets?
-This is not straightforward with the web technologies currently used in \code{kana} - 
-as of time of writing, Wasm is limited to 4 GB of linear memory due to its use of 32-bit pointers.
-Moreover, we limit \code{kana}'s CPU utilitization to ensure that the analysis does not block other user activities.
-So, even if the client device has sufficient computational power, \code{kana} would not not able to fully exploit it.
+This is not straightforward with the web technologies currently used in \code{kana} -
+our available memory is limited by the Wasm specification and our CPU utilization is (somewhat artificially) capped,
+so even if a powerful client device was available, \code{kana} would not not able to fully exploit its capabilities.
 Fortunately, our use of C++ means that we are not limited to computation in the browser.
-We can easily provide wrappers to the same underlying libraries in any client-side framework, e.g., as a command-line tool or as a package for existing data analysis ecosystems.
+We can easily provide wrappers to the same underlying libraries in any client-side framework, e.g., as a command-line tool or as an extension to existing data science ecosystems.
 For example, the \code{scran.chan} package (\url{https://github.com/LTLA/scran.chan}) allows users to repeat the \code{kana} calculations in an R session,
 where there are no restrictions on memory usage or thread utilization.
 The same approach can be used for other languages that support a foreign function interface like Python or Julia.
 Indeed, one could even run large analyses on a sufficiently provisioned backend, 
-export the analysis state in a \code{kana}-compatible format,
+export the analysis state in a \code{kana}-compatible file format,
 and then serve the exported state to client machines for exploration in the browser. 
+
+Future work will involve extending \code{kana} to handle other common tasks in scRNA-seq data analysis,
+namely batch correction \cite{haghverdi2018batch} and cell type assignment \cite{aran2019reference}.
+We will also factor out \code{kana}'s graphical elements into custom Web Components for re-use across multiple applications. 
+Of greatest interest, though, will be the continued evolution of web technologies -
+this includes further optimizations to the Wasm specification and its implementations,
+as well as upcoming standards like WebGPU to leverage graphics hardware for general computation.
+By incorporating these advances, applications like \code{kana} can extend the capabilities of the browser for compute-intensive bioinformatics in the client.
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
