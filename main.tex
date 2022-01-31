@@ -58,7 +58,7 @@ Developers can set up their own deployments by following the instructions at \ur
 \section{Application overview}
 
 Given a scRNA-seq dataset, \code{kana} implements a routine analysis with the steps listed below.
-We will not discuss the statistical and scientific rationale behind each step in much detail as this has been covered elsewhere \cite{oscabook} 
+We will not discuss the statistical and scientific rationale behind each step in much detail as this has been covered elsewhere \cite{oscabook}.
 
 \begin{enumerate}
 \item We import a gene-by-cell count matrix from the user's machine, typically in the form of Matrix Market files such as those produced by the Cellranger pipeline.
@@ -151,7 +151,7 @@ We created the \code{scran.js} library (\url{https://github.com/jkanche/scran.js
 Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain \cite{zakai2011emscripten},
 allowing \code{kana} to perform scRNA-seq-related calculations from Javascript by calling \code{scran.js} functions.
 The same library can also be used in other web applications via a standard NPM installation (\url{https://www.npmjs.com/package/scran.js}),
-or outside the browser if an appropriate Wasm runtime is available.
+or outside the browser if a suitable Wasm runtime environment is available.
 
 To evaluate the efficiency of our Wasm strategy, 
 we compared a \code{kana} analysis in the browser to that of a native executable compiled from the same C++ libraries (\url{https://github.com/LTLA/scran-cli}).
@@ -185,24 +185,27 @@ Zilionis \emph{et al.} (2019) \cite{zilionis2019single} & Human & Lung & 10x Gen
 \end{center}
 \end{table}
 
-
-% Comment on results here, noting the differences in the compiler toolchain and optimization levels.
-
-Something about the results.
+%Our results indicate that \code{kana} analyses took approximately 20-30\% more time compared to the native executable (Table \ref{tab:times}).
+%This is consistent with Wasm's promise of near-native execution and is comparable to existing benchmarking results \cite{jangda2019not}.
+%The performance gap can be attributed to the overhead of the Wasm runtime environment in the browser
+%and the differences in optimization levels of the compiler toolchains (Emscripten/Clang for Wasm, GCC for the executable).
+%We note that there are still some opportunities for optimization in our Wasm compilation process -
 
 \begin{table}
-\caption{Run times for scRNA-seq analyses on several datasets with Wasm or a native executable.
-Values are in seconds with standard errors from 5 runs.}
+\caption{Analysis run times for several datasets with \code{kana} or a native executable.
+Values are reported in seconds with standard errors from 3 runs.}
 \label{tab:times}
 \begin{center}
 \begin{tabular}{l r r r}
 \hline
-Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{Wasm} & \multicolumn{1}{c}{Native} \\
+Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{1}{c}{\code{kana}} & \multicolumn{1}{c}{Native} \\
 \hline
- & 3000 \\
- & 10000 \\
- & 68000 \\
- & 250000 \\
+Zeisel   & 3005   &  $\pm$ & $\pm$ \\
+Paul     & 10368  &  $\pm$ & $\pm$ \\
+Bach     & 25806  &  $\pm$ & $\pm$ \\
+Ernst    & 68937  &  $\pm$ & $\pm$ \\
+Bacher   & 104417 &  $\pm$ & $\pm$ \\
+Zilionis & 173954 &  $\pm$ & $\pm$ \\
 \hline
 \end{tabular}
 \end{center}
@@ -280,7 +283,7 @@ If this selection is saved, \code{kana} will perform a differential expression a
 Statistics for each gene are then shown in the marker table for examination.
 Each custom selection and its statistics are treated as part of the analysis state and are saved during export.
 
-Users can also save specific views of the embeddings into the gallery for later perusal (CIRROCUMULUS).
+Users can also save specific views of the embeddings into the gallery for later perusal (\jay{cite CIRROCUMULUS}).
 This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
 
 \subsection{Progressive rendering}
@@ -294,20 +297,20 @@ The marker table is a more subtle example of progressive rendering.
 Only the genes in the current view of the table are rendered, with the remaining visual elements being dynamically created as the user scrolls up or down to see other genes in the ranking.
 This ensures that we do not waste time rendering tens of thousands of rows when only the top few are likely to be viewed.
 
-As \code{kana} is doing the analysis in the background, we can actively monitor the change in the embeddings across t-SNE iterations or UMAP epochs.
-We do so by extracting the coordinates at various intervals and rendering them on the embedding panel,
+Given that \code{kana} is computing the embeddings in the background, we can actively monitor the change in the coordinates for each cell across t-SNE iterations or UMAP epochs.
+We do so by extracting the coordinates at regular intervals and rendering them on the embedding panel with WebGL,
 effectively creating an animation of the embedding as it is refined over time.
-This is mostly provided for entertainment value but may also provide some educational insights into how these embeddings are created.
+This is mostly provided for entertainment value but may provide some educational insights into the process of creating the embeddings (e.g., early exaggeration for t-SNE).
 
-\subsection{Accelerated graphics with WebGL}
-
-WebGL is a Javascript application programming interface (API) for efficient rendering of interactive graphics in the browser.
-It does so by leveraging the client device's graphics processing unit (GPU) to accelerate the creation of images from data and shader instructions.
-\code{kana} uses the WebGL API to quickly visualize the dimensionality reduction results for hundreds of thousands of cells, each of which must be rendered as a separate point.
-For the animations across t-SNE/UMAP iterations, we observed a frame rate of \jay{XX $\pm$ XX} frames per second (FPS) when using WebGL 
-compared to the \jay{YY $\pm$ YY} FPS with the standard canvas API.
-This improved performance with WebGL contributes to a more comfortable user experience when interacting with the dimensionality reduction plot in \code{kana},
-both in terms of smooth animations across iterations as well as smooth transitions when panning, zooming or selecting points.
+% \subsection{Accelerated graphics with WebGL}
+% 
+% WebGL is a Javascript application programming interface (API) for efficient rendering of interactive graphics in the browser.
+% It does so by leveraging the client device's graphics processing unit (GPU) to accelerate the creation of images from data and shader instructions.
+% \code{kana} uses the WebGL API to quickly visualize the dimensionality reduction results for hundreds of thousands of cells, each of which must be rendered as a separate point.
+% For the animations across t-SNE/UMAP iterations, we observed a frame rate of \jay{XX $\pm$ XX} frames per second (FPS) when using WebGL 
+% compared to the \jay{YY $\pm$ YY} FPS with the standard canvas API.
+% This improved performance with WebGL contributes to a more comfortable user experience when interacting with the dimensionality reduction plot in \code{kana},
+% both in terms of smooth animations across iterations as well as smooth transitions when panning, zooming or selecting points.
 
 \subsection{Exporting and reloading}
 
