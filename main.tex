@@ -35,8 +35,8 @@ The \code{BrowserGenome.org} application performs read alignment and transcript 
 while the \code{ubit2} application analyzes single-cell quantitative polymerase chain reaction datasets \cite{fan2017ubit2};
 both use Javascript implementations of the relevant algorithms to run in the browser.
 However, these are exceptions to the rule; most bioinformatics web applications only use the browser to visualize results that were computed elsewhere,
-e.g., \cite{megill2021cellxgene}, \cite{chelaru2014epiviz}, (\jay{JAY TO PROVIDE EXAMPLES}) and every R/Shiny application ever.
-After all, Javascript is not widely recognized as a language for data science, nor is it particularly efficient for such tasks.
+e.g., \cite{megill2021cellxgene}, \cite{chelaru2014epiviz}, \code{cirrocumulus (https://cirrocumulus.readthedocs.io/en/latest/)},  \cite{kerpedjiev2018higlass} and every R/Shiny application ever.
+After all, Javascript is not widely recognized as a language for data science, nor it is particularly efficient for such tasks.
 
 The client-side paradigm is especially appealing for single-cell genomics due to the exploratory nature of its data analysis.
 Most use cases for single-cell sequencing involve identifying new cell subpopulations or states from heterogeneous biological samples \cite{stegle2015computational},
@@ -161,8 +161,8 @@ PCA on the top 2500 HVGs to obtain the top 25 PCs;
 SNN graph construction with 10 neighbors and multi-level community detection at a resolution of 0.5;
 t-SNE with a perplexity of 30;
 and UMAP with 15 neighbors and a minimum distance of 0.01.
-We collected timings on \jay{Jay's Linux laptop} using 8 web workers for \code{kana} (see below) and 8 threads for the executable.
-For convenience, we ran the \code{kana} timings in batch using Puppeteer (\url{https://github.com/puppeteer/puppeteer}) to control a headless Chrome browser (\jay{vXXXX}).
+We collected timings on an Intel Core i7-8850H CPU (2.60GHz, 6 cores, 32 GB memory)  using 8 web workers for \code{kana} (see below) and 8 threads for the executable.
+For convenience, we ran the \code{kana} timings in batch using Puppeteer (\url{https://github.com/puppeteer/puppeteer}) to control a headless Chrome browser (\code{HeadlessChrome/98.0.4758.0}).
 
 \begin{table}
 \caption{Collection of scRNA-seq datasets used for testing.}
@@ -203,12 +203,12 @@ Values are reported in seconds with standard errors from 3 runs.}
 \hline
 Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{2}{c}{\code{kana}} & \multicolumn{2}{c}{Native} \\
 \hline
-        Zeisel   & 3005   & \jay{  7} &  1 & \jay{  5} &  1 \\
-        Paul     & 10368  & \jay{ 19} &  2 & \jay{ 13} &  2 \\
-        Bach     & 25806  & \jay{ 60} &  5 & \jay{ 44} &  5 \\
-        Ernst    & 68937  & \jay{200} & 10 & \jay{118} & 10 \\
-        Bacher   & 104417 & \jay{285} & 10 & \jay{171} & 10 \\
-        Zilionis & 173954 & \jay{???} & ?? & \jay{180} & 10 \\
+        Zeisel   & 3005   & 6.86 &  0.10 & 5.60 &  0.05 \\
+        Paul     & 10368  & 17.40 &  0.46 & 13.52 &  0.38 \\
+        Bach     & 25806  & 56.58 &  0.33 & 43.33 &  0.39 \\
+        Ernst    & 68937  & 157.17 & 0.66 & 54.67 & 1.86 \\
+        Bacher   & 104417 & 226.82 & 2.18 & 170.32 & 1.34 \\
+        Zilionis & 173954 & 268.83 & 4.52 & 183.77 & 2.46 \\
 \hline
 \end{tabular}
 \end{center}
@@ -267,12 +267,12 @@ The number of non-zero elements for each dataset is also shown in millions.}
 \hline
         Dataset & \multicolumn{1}{c}{Cells} & \multicolumn{1}{c}{Non-zeros} & \multicolumn{2}{c}{\code{kana}} & \multicolumn{2}{c}{Native} \\
 \hline
-        Zeisel   & 3005  &  11.3 & \jay{??} & ? & \jay{ 160} & 0 \\
-        Paul     & 10368 &  11.9 & \jay{??} & ? & \jay{ 313} & 0 \\
-        Bach     & 25806 &  61.2 & \jay{??} & ? & \jay{ 988} & 0 \\
-        Ernst    & 68937 & 163.1 & \jay{??} & ? & \jay{2572} & 0 \\
-        Bacher   & 104417& 143.0 & \jay{??} & ? & \jay{2496} & 0 \\
-        Zilionis & 173954&  53.7 & \jay{??} & ? & \jay{2663} & 0 \\
+        Zeisel   & 3005  &  11.3 & \jay{??} & ? & 158.20 & 0.05 \\
+        Paul     & 10368 &  11.9 & \jay{??} & ? & 306.26 & 0.06 \\
+        Bach     & 25806 &  61.2 & \jay{??} & ? & 965.17 & 0.03 \\
+        Ernst    & 68937 & 163.1 & \jay{??} & ? & 2512.08 & 0.06 \\
+        Bacher   & 104417& 143.0 & \jay{??} & ? & 2437.75 & 1.34 \\
+        Zilionis & 173954&  53.7 & \jay{??} & ? & 2600.66 & 0.04 \\
 \hline
 \end{tabular}
 \end{center}
@@ -287,6 +287,8 @@ at which point \code{kana} will be able to process larger datasets.
 As an aside, memory usage across datasets in Table \ref{tab:memory} is more strongly associated with the number of cells than the number of non-zero elements.
 This indicates that the our count matrix is small enough (in its layered sparse form) that it is not the major cause of memory usage in \code{kana}.
 Rather, usage seems to be mostly driven by intermediates and results created in the analysis steps.
+
+The code for to benchmark memory and time of the analysis for both kana and scrna-cli is available on GitHub (\url{https://github.com/jkanche/kana.perf/})
 
 \section{User interface concepts}
 
@@ -303,7 +305,7 @@ If this selection is saved, \code{kana} will perform a differential expression a
 Statistics for each gene are then shown in the marker table for examination.
 Each custom selection and its statistics are treated as part of the analysis state and are saved during export.
 
-Users can also save specific views of the embeddings into the gallery for later perusal (\jay{cite CIRROCUMULUS}).
+Inspired by the gallery in cirrocumulus, users can also save specific views of the embeddings for later perusal.
 This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
 
 \subsection{Progressive rendering}
