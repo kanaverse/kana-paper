@@ -36,7 +36,8 @@ while the \code{ubit2} application analyzes single-cell quantitative polymerase 
 both use Javascript implementations of the relevant algorithms to run in the browser.
 However, these are exceptions to the rule; most bioinformatics web applications only use the browser to visualize results that were computed elsewhere,
 e.g., \cite{megill2021cellxgene}, \cite{chelaru2014epiviz}, \code{Cirrocumulus} (\url{https://cirrocumulus.readthedocs.io/en/latest/}), \code{Vitessce} (\url{http://vitessce.io/}), \cite{kerpedjiev2018higlass} and every R/Shiny application ever.
-After all, Javascript is not widely recognized as a language for data science, nor it is particularly efficient for such tasks.
+This state of affairs is not unexpected - 
+after all, Javascript is not widely recognized as a language for data science, nor it is particularly efficient for such tasks.
 
 The client-side paradigm is especially appealing for single-cell genomics due to the exploratory nature of its data analysis.
 Most use cases for single-cell sequencing involve identifying new cell subpopulations or states from heterogeneous biological samples \cite{stegle2015computational},
@@ -49,7 +50,7 @@ We present \code{kana}, a web application for single-cell RNA-seq (scRNA-seq) da
 \code{kana} provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
 starting from a count matrix and finishing with marker detection.
 Users can interactively explore the low-dimensional embeddings, clusterings and marker genes in an intuitive graphical interface that encourages iterative re-analysis.
-Once finished, users can save their analysis and results for later examination or share with collaborators.
+Once finished, users can save their analysis and results for later examination or sharing with collaborators.
 By using technologies like WebAssembly and web workers, we achieve high-performance compute for datasets containing hundreds of thousands of cells.
 
 The \code{kana} application is available at \url{https://www.jkanche.com/kana}.
@@ -160,10 +161,10 @@ QC filtering to 3 MADs from the median;
 PCA on the top 2500 HVGs to obtain the top 25 PCs;
 SNN graph construction with 10 neighbors and multi-level community detection at a resolution of 0.5;
 t-SNE with a perplexity of 30;
-and UMAP with 15 neighbors and a minimum distance of 0.01.
-We collected timings on an Intel Core i7-8850H CPU (2.60GHz, 6 cores, 32 GB memory)  using 8 web workers for \code{kana} (see below) and 8 threads for the executable.
+UMAP with 15 neighbors and a minimum distance of 0.01;
+and 8 threads for all parallel sections (i.e., web workers for \code{kana}, see below).
+We collected timings on an Intel Core i7-8850H CPU (2.60GHz, 6 cores, 32 GB memory) running Manjaro Linux.
 For convenience, we ran the \code{kana} timings in batch using Puppeteer (\url{https://github.com/puppeteer/puppeteer}) to control a headless Chrome browser (\code{HeadlessChrome/98.0.4758.0}). 
-(\url{https://github.com/jkanche/kana.perf/}) repository contains code for all benchmarks mentioned in this manuscript.
 
 \begin{table}
 \caption{Collection of scRNA-seq datasets used for testing.}
@@ -186,7 +187,7 @@ Zilionis \emph{et al.} (2019) \cite{zilionis2019single} & Human & Lung & 10x Gen
 \end{center}
 \end{table}
 
-Our results indicate that \code{kana} analyses took approximately 50\% longer to run compared to the native executable (Table \ref{tab:times}).
+Our results indicate that \code{kana} analyses took approximately 25-50\% longer to run compared to the native executable (Table \ref{tab:times}).
 This is consistent with other benchmarking results \cite{jangda2019not}
 where the performance gap is attributed to Wasm's design constraints and the runtime overhead of the browser's Wasm runtime environment.
 Our native executable was also created with a different compiler toolchain (GCC, instead of LLVM for the Wasm binary),
@@ -282,8 +283,8 @@ The number of non-zero elements for each dataset is also shown in millions.}
 Importantly, \code{kana}'s memory usage lies below Wasm's hard limit of 4 gigabytes of addressable memory.
 This limit is a consequence of the use of 32-bit pointers in the current Wasm specification,
 and exceeding this limit will cause allocation errors and application failure.
-Future Wasm releases may support 64-bit pointers (see \url{https://github.com/WebAssembly/memory64} for the relevant proposal) or multiple memories (\url{https://github.com/WebAssembly/multi-memory/blob/main/proposals/multi-memory/Overview.md})
-at which point \code{kana} will be able to process larger datasets.
+Future Wasm releases may support 64-bit pointers (\url{https://github.com/WebAssembly/memory64}) or multiple memories (\url{https://github.com/WebAssembly/multi-memory});
+if these proposals are accepted, \code{kana} will be able to process datasets beyond the 4 GB limit.
 
 As an aside, memory usage across datasets in Table \ref{tab:memory} is more strongly associated with the number of cells than the number of non-zero elements.
 This indicates that the count matrix is small enough (in its layered sparse form) that it is not the major cause of memory usage in \code{kana}.
@@ -304,7 +305,7 @@ If this selection is saved, \code{kana} will perform a differential expression a
 Statistics for each gene are then shown in the marker table for examination.
 Each custom selection and its statistics are treated as part of the analysis state and are saved during export.
 
-Inspired by the gallery in cirrocumulus, users can also save specific views of the embeddings for later perusal.
+Inspired by the gallery in \code{Cirrocumulus}, users can save specific views of the embeddings for later perusal.
 This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
 
 \subsection{Progressive rendering}
@@ -389,6 +390,20 @@ Of greatest interest, though, will be the continued evolution of web technologie
 this includes further optimizations to the Wasm specification and its implementations,
 as well as upcoming standards like WebGPU to leverage graphics hardware for general computation.
 By incorporating these advances, applications like \code{kana} can extend the capabilities of the browser for compute-intensive bioinformatics in the client.
+
+\section{Software availability}
+
+Here we summarize the key software repositories used in this paper.
+For brevity, we will omit the various C++ libraries that have been listed previously.
+
+\begin{itemize}
+\item The \code{kana} application is deployed at \url{https://www.jkanche.com/kana} with source code at \url{https://github.com/jkanche/kana}.
+\item The \code{scran.js} library is available at \url{https://npmjs.com/package/scran.js} with source code at \url{https://github.com/jkanche/scran.js}.
+\item The \code{scran.chan} R package based on the same C++ libraries is available at \url{https://github.com/LTLA/scran.chan}.
+\item The command-line interface based on the same C++ libraries is available at \url{https://github.com/LTLA/scran-cli}.
+\item All datasets used here can be downloaded from \url{https://github.com/jkanche/random-test-files}.
+\item Benchmarking code and results are available at \url{https://github.com/jkanche/kana.perf}.
+\end{itemize}
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
