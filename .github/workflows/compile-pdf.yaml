@@ -1,0 +1,20 @@
+on: [push, pull_request]
+
+name: Compile the PDF
+
+jobs:
+  compile-pdf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Compile with LaTeX
+        uses: xu-cheng/latex-action@v2
+        with:
+          root_file: main.tex
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: Manuscript
+          path: main.pdf
+
