@@ -252,7 +252,7 @@ The layered representation can then be seamlessly used with all C++ code compati
 
 \subsection{Examining memory usage}
 
-As an additional evaluation, we recorded the memory usage of the \code{kana} analyses (Table \ref{tab:times}).
+As an additional evaluation, we recorded the memory usage of the \code{kana} analyses (Table \ref{tab:memory}).
 For \code{kana}, we used the final size of the Wasm heap as a convenient proxy for the peak memory used by the application.
 This omits some memory usage on the Javascript side but should capture the most memory-intensive data structures, particularly the count matrix.
 For comparison, we also recorded the maximum resident set size after each run of the native executable.
@@ -286,9 +286,9 @@ and exceeding this limit will cause allocation errors and application failure.
 Future Wasm releases may support 64-bit pointers (\url{https://github.com/WebAssembly/memory64}) or multiple memories (\url{https://github.com/WebAssembly/multi-memory});
 if these proposals are accepted, \code{kana} will be able to process datasets beyond the 4 GB limit.
 
-As an aside, memory usage across datasets in Table \ref{tab:memory} is more strongly associated with the number of cells than the number of non-zero elements.
-This indicates that the count matrix is small enough (in its layered sparse form) that it is not the major cause of memory usage in \code{kana}.
-Rather, usage seems to be mostly driven by intermediates and results created in the analysis steps.
+% As an aside, memory usage across datasets in Table \ref{tab:memory} is more strongly associated with the number of cells than the number of non-zero elements.
+% This indicates that the count matrix is small enough (in its layered sparse form) that it is not the major cause of memory usage in \code{kana}.
+% Rather, usage seems to be mostly driven by intermediates and results created in the analysis steps.
 
 \section{User interface concepts}
 
