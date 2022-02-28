@@ -73,8 +73,10 @@ We sort on the residuals to define a subset of highly variable genes (HVGs).
 \item We perform principal components analysis (PCA) on the log-expression matrix with the subset of HVGs.
 This yields a few top PCs that capture the heterogeneity of the data in a compressed and denoised form.
 \item We apply clustering techniques on the top PCs to generate discrete subpopulations.
-Specifically, we apply multi-level (i.e., ``louvain'') community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
-Each cluster is characterized through differential expression analyses to detect its marker genes.
+By default, this uses multi-level (i.e., ``louvain'') community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
+We also support k-means clustering with some user-specified choice of the number of clusters.
+\item Each cluster is characterized through differential expression analyses to detect its marker genes.
+Specifically, we perform a series of pairwise comparisons between clusters and summarize the effect sizes into a ranking of potential marker genes for each cluster.
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
 \end{enumerate}
@@ -97,7 +99,7 @@ Clicking ``Analyze" will perform the entire analysis.}
 Once each step of the analysis is complete, \code{kana} visualizes its results in a multi-panel layout (Figure \ref{screenshot:results}).
 One panel contains a scatter plot for the low-dimensional embeddings, where each cell is a point that is colored by cluster identity or gene expression.
 Another panel contains a table of marker statistics for a selected cluster, where potential marker genes are ranked and filtered according to the magnitude of upregulation over other clusters.
-We also have a gallery to visualize miscellaneous details such as the distribution of QC metrics.
+We also provide a gallery to visualize miscellaneous details such as the distribution of QC metrics.
 
 \begin{figure}[htbp]
 \begin{center}
@@ -133,8 +135,8 @@ modified with the ability to consider weights in the span calculations.
 \item The \code{CppIrlba} library (\url{https://github.com/LTLA/CppIrlba}) library contains a C++ port of the IRLBA algorithm \cite{baglama2005augmented} to efficiently obtain the top PCs from an input matrix.
 This is based on the C code in the \code{irlba} package \cite{irlba} with some refactoring to eliminate R-specific dependencies.
 In particular, we now rely on the Eigen library \cite{eigenweb} for matrix operations.
-%\item The \code{CppKmeans} library (\url{https://github.com/LTLA/CppKmeans}) contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
-%In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's \code{kmeans} function.
+\item The \code{CppKmeans} library (\url{https://github.com/LTLA/CppKmeans}) contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
+In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's \code{kmeans} function.
 \item The \code{knncolle} library (\url{https://github.com/LTLA/knncolle}) wraps several nearest neighbor detection algorithms in a consistent interface for interchangeable use.
 This includes exact methods like vantage point tree search \cite{yianilos1993data} as well as approximate methods like Annoy \cite{annoy}.
 It is equivalent to the \code{BiocNeighbors} package from Bioconductor \cite{biocneighbors}.
@@ -239,7 +241,7 @@ The intention is to leave enough resources available for other activities to pas
 
 To reduce memory usage for large single-cell count matrices, we use a ``layered matrix" approach that splits the input matrix by row into 3 sparse submatrices.
 The first, second and third submatrices contain data for genes where all non-zero counts can fit into 8-bit, 16-bit and 32-bit unsigned integers, respectively.
-This improves memory efficiency as large datasets generally have low sequencing coverage;
+This improves memory efficiency for datasets with many cells but low sequencing coverage;
 most counts can be represented as 8-bit integers to save space, leaving a few high-abundance genes to be stored in the submatrices with larger integer types.
 A similar strategy is applied to row indices for non-zero elements in a sparse matrix, where most datasets have fewer than 60,000 genes and can be accommodated with 16-bit integers.
 This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset with 30,000 genes and 100,000 cells at 5\% density requires around 500 MB of memory in this data structure.
