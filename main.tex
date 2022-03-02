@@ -15,6 +15,17 @@
 
 \newcommand{\jay}[1]{\textcolor{red}{#1}}
 
+\begin{abstract}
+We present kana, a web application for interactive single-cell RNA-seq (scRNA-seq) data analysis in the browser.
+Like, literally, in the browser:
+kana leverages web technologies such as WebAssembly to efficiently perform the relevant computations on the user's machine,
+avoiding the need to provision and maintain a backend service. 
+The application provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis, 
+starting from a count matrix and finishing with marker detection.
+Results are presented in an intuitive web interface for further exploration and iterative analysis. 
+Testing on public datasets shows that kana can analyze over 100,000 cells within 5 minutes on a typical laptop.
+\end{abstract}
+
 \section{Introduction}
 
 Modern web browsers are sophisticated pieces of software responsible for rendering, scripting, networking, data storage and more.
@@ -135,12 +146,12 @@ modified with the ability to consider weights in the span calculations.
 \item The CppIrlba library \cite{cppirlba} library contains a C++ port of the IRLBA algorithm \cite{baglama2005augmented} to efficiently obtain the top PCs from an input matrix.
 This is based on the C code in the irlba R package \cite{irlba} with some refactoring to eliminate R-specific dependencies.
 In particular, we now rely on the Eigen library \cite{eigenweb} for matrix operations.
-\item The CppKmeans library \cite{cppkmeans} contains C++ implementations of the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
-In particular, the Hartigan-Wong implementation was translated from the Fortran code used by R's kmeans function.
-We implement several initialization methods including kmeans++ \cite{vassilvitskii2006kmeanspp} and PCA partitioning \cite{su2007search}.
+\item The CppKmeans library \cite{cppkmeans} implements the Hartigan-Wong \cite{hartiganwong} and Lloyd algorithms \cite{lloyd} for k-means clustering.
+The Hartigan-Wong implementation was translated from the Fortran code used by R's kmeans function.
+We also provide several initialization methods including kmeans++ \cite{vassilvitskii2006kmeanspp} and PCA partitioning \cite{su2007search}.
 \item The knncolle library \cite{knncolle} wraps several nearest neighbor detection algorithms in a consistent interface. 
 This includes exact methods like vantage point tree search \cite{yianilos1993data} as well as approximate methods like Annoy \cite{annoy}.
-It is inspired by the BiocNeighbors package from Bioconductor \cite{biocneighbors}.
+It is based on the BiocNeighbors package from Bioconductor \cite{biocneighbors}.
 \item The libscran library \cite{libscran} implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
 The code here originates from the scran, scuttle and scater packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
 This library relies on the igraph C library \cite{csardi2006igraph} for community detection from the SNN graph.
@@ -192,7 +203,7 @@ Zilionis \emph{et al.} (2019) \cite{zilionis2019single} & Human & Lung & 10x Gen
 
 Our results indicate that kana analyses took approximately 25-50\% longer to run compared to the native executable (Table \ref{tab:times}).
 This is consistent with other benchmarking results \cite{jangda2019not}
-where the performance gap is attributed to Wasm's design constraints and the runtime overhead of the browser's Wasm runtime environment.
+where the performance gap is attributed to Wasm's design constraints and the overhead of the browser's Wasm runtime environment.
 Our native executable was also created with a different compiler toolchain (GCC, instead of LLVM for the Wasm binary),
 where the same nominal optimization level (O3) may have different effects.
 These results suggest that some work may still be required to completely fulfill Wasm's promise of ``near-native execution''.
@@ -223,14 +234,14 @@ Dataset & \multicolumn{1}{c}{Number of cells} & \multicolumn{2}{c}{kana} & \mult
 
 Web workers provide a simple mechanism for parallelization inside the browser.
 In kana, a web worker is used to run the compute-intensive analysis in its own thread so that the application's main thread is free to respond to user interaction.
-However, we also use web workers to parallelize the computations within some of the analysis steps by compiling our C++ code with PThreads support.
-This implements POSIX threads as web workers for transparent parallelization across genes or cells during calculation of QC metrics, nearest neighbor detection and marker scoring.
-In addition, we parallelize across steps by manually creating a separate web worker to execute the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
+We also use web workers to parallelize the operations within some analysis steps by compiling our C++ code with PThreads support;
+this instructs Emscripten to implement POSIX threads as web workers for transparent parallelization across genes or cells during calculation of QC metrics, nearest neighbor detection and marker scoring.
+Finally, we parallelize across steps by manually creating a separate web worker to execute the t-SNE, UMAP and clustering steps, which are independent of each other and can run concurrently.
 
 A minor complication with PThreads is that we need to enable cross-origin isolation on the kana site.
 Briefly, this is a security measure that prevents inappropriate data access from malicious scripts in the same browsing context.
 Once cross-origin isolated, the site is permitted to use a SharedArrayBuffer for copy-free transfer of data between web workers.
-To achieve this, we need to serve the kana assets with the appropriate cross-origin headers - specifically, the embedder and opener policies.
+To achieve this, we need to serve the kana assets with the appropriate cross-origin headers -- specifically, the embedder and opener policies.
 However, this may not always be possible, e.g., when hosting on institutional sites or public sites such as GitHub Pages.
 Instead, we use a service worker to cache and re-serve kana with the correct headers,
 ensuring that it can be easily deployed in a range of hosting environments.
