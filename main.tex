@@ -40,14 +40,14 @@ As the entire analysis is performed on the client machine, we avoid any data tra
 Finally, we do not require installation of any data analysis environments like R or Python, ensuring that the analyses are accessible to audiences of varying computational skill.
 
 Some prior work already exists to realize these client-side benefits for bioinformatics data analysis.
-For example, the BioJS registry hosts Javascript components for handling biological data \cite{gomez2013biojs}, many of which focus on DNA and protein sequence analysis.
+For example, the BioJS registry hosts JavaScript components for handling biological data \cite{gomez2013biojs}, many of which focus on DNA and protein sequence analysis.
 The BrowserGenome.org application performs read alignment and transcript quantification for RNA sequencing data \cite{schmid2015browsergenome},
 while the ubit2 application analyzes single-cell quantitative polymerase chain reaction datasets \cite{fan2017ubit2};
-both use Javascript implementations of the relevant algorithms to run in the browser.
+both use JavaScript implementations of the relevant algorithms to run in the browser.
 However, these are exceptions to the rule; most bioinformatics web applications only use the browser to visualize results that were computed elsewhere,
 e.g., cellxgene \cite{megill2021cellxgene}, Epiviz \cite{chelaru2014epiviz}, Cirrocumulus \cite{cirrocumulus}, Vitessce \cite{vitessce}, HiGlass \cite{kerpedjiev2018higlass} and every R/Shiny application ever \cite{shiny}.
 This state of affairs is not unexpected - 
-after all, Javascript is not widely recognized as a language for data science, nor it is particularly efficient for such tasks.
+after all, JavaScript is not widely recognized as a language for data science, nor it is particularly efficient for such tasks.
 
 The client-side paradigm is especially appealing for single-cell genomics due to the exploratory nature of its data analysis.
 Most use cases for single-cell sequencing involve identifying new cell subpopulations or states from heterogeneous biological samples \cite{stegle2015computational},
@@ -56,7 +56,7 @@ If the compute could be performed in the browser, the results could be immediate
 However, this is complicated by the size of the datasets, each of which involves tens of thousands of genes and up to millions of cells;
 and the paucity of browser-compatible implementations of relevant algorithms, most of which are written in R or Python.
 
-We present kana, a web application for single-cell RNA-seq (scRNA-seq) data analysis inside the browser.
+We present kana, a web application for single-cell (scRNA-seq, CITE-seq) data analysis inside the browser.
 kana provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
 starting from a count matrix and finishing with marker detection.
 Users can interactively explore the low-dimensional embeddings, clusterings and marker genes in an intuitive graphical interface that encourages iterative re-analysis.
@@ -73,7 +73,8 @@ We will not discuss the statistical and scientific rationale behind each step in
 
 \begin{enumerate}
 \item We import a gene-by-cell count matrix from the user's machine, typically in the form of Matrix Market files such as those produced by the Cellranger pipeline.
-HDF5 files are also supported, using either the 10X HDF5 feature barcode matrix format or as H5AD files.
+HDF5 files, using either the 10X HDF5 feature barcode matrix format or as H5AD files, SingleCellExperiment \cite{amezquita2020orchestrating} objects stored as RDS files or datasets from public repositories like Bioconductor's ExperimentHub \cite{morgan2019experimenthub} are also supported.
+\item We can import more than one dataset into Kana and perform integration or remove batch effects between cells from different samples using MNN correction \cite{haghverdi2018batch}. Options are available to choose an annotation column that specifies batches.
 \item We compute common quality control (QC) metrics such as the total count, number of detected genes and proportion of mitochondrial counts.
 Low-quality cells are defined as those cells with outlier values for any of these metrics; these are filtered out from subsequent steps.
 \item We perform scaling normalization based on the library size to remove cell-specific biases.
@@ -89,6 +90,7 @@ We also support k-means clustering with some user-specified choice of the number
 Specifically, we perform a series of pairwise comparisons between clusters and summarize the effect sizes into a ranking of potential marker genes for each cluster.
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
+\item We can optionally annotate cell types for each computed cluster using references and methods from SingleR \cite{aran2019reference}.
 \end{enumerate}
 
 At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
@@ -130,7 +132,7 @@ The exported analysis can be quickly reloaded in a new browser session, allowing
 \subsection{Efficient compute with WebAssembly}
 
 WebAssembly (Wasm) \cite{haas2017bringing} is a binary instruction format that provides a web-executable compilation target for languages like C/C++, Go and Rust.
-It aims to provide near-native performance for computationally intensive tasks, running alongside and complementing Javascript in web applications.
+It aims to provide near-native performance for computationally intensive tasks, running alongside and complementing JavaScript in web applications.
 The use of Wasm allows us to convert the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis -
 see the biowasm project \cite{biowasm} for previous efforts in this direction.
 For kana, we collected or created C++ implementations of the algorithms required for each analysis step:
@@ -160,12 +162,15 @@ This is mostly a refactored version of the code in the Rtsne package \cite{rtsne
 Some additional optimizations have been applied to improve scalability.
 \item The umappp library \cite{umappp} contains a C++ implementation of the UMAP algorithm \cite{mcinnes2018umap}.
 This is derived from code in the uwot R package \cite{uwot}.
+\item The SinglePP library \cite {singlepp} adapts singleR methods \cite{aran2019reference} in C++ for cell type annotation.
+\item The CppMnnCorrect library \cite{cppmnncorrect} implements the mutual nearest neighbors (MNNs) method  \cite{haghverdi2018batch} for batch correction. It is based on the fastMNN method from the batchelor package \cite{batchelorbioc} in Bioconductor.
+\item The rds2cpp library \cite{rds2cpp} to read and write RDS files in C++.
 \end{itemize}
 
-We created the scran.js library \cite{scran.js} to provide Javascript bindings to these C++ libraries.
+We created the scran.js library \cite{scran.js} to provide JavaScript bindings to these C++ libraries.
 Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain \cite{zakai2011emscripten},
-allowing kana to perform scRNA-seq-related calculations from Javascript by calling scran.js functions.
-The same library can also be used in other web applications via a standard NPM installation, 
+allowing applications to perform scRNA-seq-related calculations from JavaScript by calling scran.js functions. The bakana library \cite{bakana} used by Kana, wraps scran.js functions into a pipeline to easily run a full single-cell analysis workflow.
+The same libraries can also be used in other web applications via a standard NPM installation, 
 or outside the browser if a suitable Wasm runtime environment is available.
 
 To evaluate the efficiency of our Wasm strategy, 
@@ -268,7 +273,7 @@ The layered representation can then be seamlessly used with all C++ code compati
 
 As an additional evaluation, we recorded the memory usage of the kana analyses (Table \ref{tab:memory}).
 For kana, we used the final size of the Wasm heap as a convenient proxy for the peak memory used by the application.
-This omits some memory usage on the Javascript side but should capture the most memory-intensive data structures, particularly the count matrix.
+This omits some memory usage on the JavaScript side but should capture the most memory-intensive data structures, particularly the count matrix.
 For comparison, we also recorded the maximum resident set size after each run of the native executable.
 In all cases, memory usage with Wasm was comparable to that of the native executable and maintained below 3 gigabytes,
 which is reasonable for a client device.
@@ -317,7 +322,7 @@ A more complex example involves the detection of new marker genes for a custom s
 Users can create a custom selection by brushing on regions of interest in the embedding panel.
 If this selection is saved, kana will perform a differential expression analysis to detect upregulation inside the selection compared to all other cells.
 Statistics for each gene are then shown in the marker table for examination.
-Each custom selection and its statistics are treated as part of the analysis state and are saved during export.
+Each custom selection and its statistics are treated as part of the analysis state and are saved during export. In addition, kana  provides versus mode to compare markers between two clusters or between two custom selections, to identify subtle differences between closely related groups of cells.
 
 Inspired by the gallery in Cirrocumulus, users can save specific views of the embeddings for later perusal.
 This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
@@ -340,7 +345,7 @@ This is mostly present for entertainment value but may provide some educational 
 
 % \subsection{Accelerated graphics with WebGL}
 % 
-% WebGL is a Javascript application programming interface (API) for efficient rendering of interactive graphics in the browser.
+% WebGL is a JavaScript application programming interface (API) for efficient rendering of interactive graphics in the browser.
 % It does so by leveraging the client device's graphics processing unit (GPU) to accelerate the creation of images from data and shader instructions.
 % kana uses the WebGL API to quickly visualize the dimensionality reduction results for hundreds of thousands of cells, each of which must be rendered as a separate point.
 % For the animations across t-SNE/UMAP iterations, we observed a frame rate of \jay{XX $\pm$ XX} frames per second (FPS) when using WebGL 
@@ -412,6 +417,7 @@ For brevity, we will omit the various C++ libraries that have been listed previo
 
 \begin{itemize}
 \item The kana application is deployed at \url{https://www.jkanche.com/kana} with source code at \url{https://github.com/jkanche/kana}.
+\item The bakana library is available at \url{https://npmjs.com/package/bakana} with source code at \url{https://github.com/LTLA/bakana}.
 \item The scran.js library is available at \url{https://npmjs.com/package/scran.js} with source code at \url{https://github.com/jkanche/scran.js}.
 \item The scran.chan R package based on the same C++ libraries is available at \url{https://github.com/LTLA/scran.chan}.
 \item The command-line interface based on the same C++ libraries is available at \url{https://github.com/LTLA/scran-cli}.
