@@ -56,7 +56,7 @@ If the compute could be performed in the browser, the results could be immediate
 However, this is complicated by the size of the datasets, each of which involves tens of thousands of genes and up to millions of cells;
 and the paucity of browser-compatible implementations of relevant algorithms, most of which are written in R or Python.
 
-We present kana, a web application for single-cell (scRNA-seq, CITE-seq) data analysis inside the browser.
+We present kana, a web application for single-cell RNA-seq (scRNA-seq) data analysis inside the browser.
 kana provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
 starting from a count matrix and finishing with marker detection.
 Users can interactively explore the low-dimensional embeddings, clusterings and marker genes in an intuitive graphical interface that encourages iterative re-analysis.
@@ -95,6 +95,8 @@ Specifically, we perform a series of pairwise comparisons between clusters and s
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
 \item We can optionally annotate cell types for each computed cluster using the SingleR algorithm \cite{aran2019reference}.
 This is based on labelled reference datasets involving a variety of human and mouse cell types.
+\item For CITE-seq datasets \cite{stoeckius2017simultaneous}, we can combine information from both RNA and protein modalities during clustering and visualization.
+This uses a nearest-neighbor approach to equalize the baseline variance of each modality, though user-specified weights are also supported. 
 \end{enumerate}
 
 At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
