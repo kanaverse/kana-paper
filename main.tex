@@ -73,8 +73,9 @@ We will not discuss the statistical and scientific rationale behind each step in
 
 \begin{enumerate}
 \item We import a gene-by-cell count matrix from the user's machine, typically in the form of Matrix Market files such as those produced by the Cellranger pipeline.
-HDF5 files, using either the 10X HDF5 feature barcode matrix format or as H5AD files, SingleCellExperiment \cite{amezquita2020orchestrating} objects stored as RDS files or datasets from public repositories like Bioconductor's ExperimentHub \cite{morgan2019experimenthub} are also supported.
-\item We can import more than one dataset into Kana and perform integration or remove batch effects between cells from different samples using MNN correction \cite{haghverdi2018batch}. Options are available to choose an annotation column that specifies batches.
+We also support HDF5 files, using either the 10X HDF5 feature barcode matrix format or as H5AD files; 
+SummarizedExperiment or SingleCellExperiment objects \cite{amezquita2020orchestrating} saved to RDS files;
+or datasets from public repositories like Bioconductor's ExperimentHub \cite{morgan2019experimenthub}.
 \item We compute common quality control (QC) metrics such as the total count, number of detected genes and proportion of mitochondrial counts.
 Low-quality cells are defined as those cells with outlier values for any of these metrics; these are filtered out from subsequent steps.
 \item We perform scaling normalization based on the library size to remove cell-specific biases.
@@ -83,6 +84,8 @@ This is followed by a log-transformation to obtain a matrix of log-normalized ex
 We sort on the residuals to define a subset of highly variable genes (HVGs). 
 \item We perform principal components analysis (PCA) on the log-expression matrix with the subset of HVGs.
 This yields a few top PCs that capture the heterogeneity of the data in a compressed and denoised form.
+\item For datasets containing multiple batches, we remove effects between cells from different samples using mutual nearest neighbors (MNN) correction \cite{haghverdi2018batch}. 
+This can also be used to integrate multiple datasets based on their set of shared features.
 \item We apply clustering techniques on the top PCs to generate discrete subpopulations.
 By default, this uses multi-level (i.e., ``louvain'') community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
 We also support k-means clustering with some user-specified choice of the number of clusters.
@@ -90,7 +93,8 @@ We also support k-means clustering with some user-specified choice of the number
 Specifically, we perform a series of pairwise comparisons between clusters and summarize the effect sizes into a ranking of potential marker genes for each cluster.
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
-\item We can optionally annotate cell types for each computed cluster using references and methods from SingleR \cite{aran2019reference}.
+\item We can optionally annotate cell types for each computed cluster using the SingleR algorithm \cite{aran2019reference}.
+This is based on labelled reference datasets involving a variety of human and mouse cell types.
 \end{enumerate}
 
 At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
@@ -162,16 +166,20 @@ This is mostly a refactored version of the code in the Rtsne package \cite{rtsne
 Some additional optimizations have been applied to improve scalability.
 \item The umappp library \cite{umappp} contains a C++ implementation of the UMAP algorithm \cite{mcinnes2018umap}.
 This is derived from code in the uwot R package \cite{uwot}.
-\item The SinglePP library \cite {singlepp} adapts singleR methods \cite{aran2019reference} in C++ for cell type annotation.
-\item The CppMnnCorrect library \cite{cppmnncorrect} implements the mutual nearest neighbors (MNNs) method  \cite{haghverdi2018batch} for batch correction. It is based on the fastMNN method from the batchelor package \cite{batchelorbioc} in Bioconductor.
-\item The rds2cpp library \cite{rds2cpp} to read and write RDS files in C++.
+\item The SinglePP library \cite {singlepp} contains a C++ implementation of the SingleR algorithm \cite{aran2019reference}.
+This is derived from code in the SingleR Bioconductor package. 
+\item The CppMnnCorrect library \cite{cppmnncorrect} implements the MNN method fo batch correction \cite{haghverdi2018batch}.
+It is loosely based on the fastMNN method from the batchelor Biocondcutor package \cite{batchelorbioc}.
+\item The rds2cpp library \cite{rds2cpp} implements an RDS file parser/writer as a standalone C++ library.
+Note that this can be used without linking to R itself. 
 \end{itemize}
 
 We created the scran.js library \cite{scran.js} to provide JavaScript bindings to these C++ libraries.
 Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain \cite{zakai2011emscripten},
-allowing applications to perform scRNA-seq-related calculations from JavaScript by calling scran.js functions. The bakana library \cite{bakana} used by Kana, wraps scran.js functions into a pipeline to easily run a full single-cell analysis workflow.
+allowing applications to perform scRNA-seq-related calculations from JavaScript by calling scran.js functions. 
 The same libraries can also be used in other web applications via a standard NPM installation, 
 or outside the browser if a suitable Wasm runtime environment is available.
+For example, the bakana library wraps scran.js functions into an analysis pipeline for ``one-click'' execution in both the browser and Node.js envrionments.
 
 To evaluate the efficiency of our Wasm strategy, 
 we compared a kana analysis in the browser to that of a native executable compiled from the same C++ libraries \cite{scrancli}.
