@@ -171,7 +171,7 @@ This is derived from code in the uwot R package \cite{uwot}.
 \item The SinglePP library \cite {singlepp} contains a C++ implementation of the SingleR algorithm \cite{aran2019reference}.
 This is derived from code in the SingleR Bioconductor package. 
 \item The CppMnnCorrect library \cite{cppmnncorrect} implements the MNN method fo batch correction \cite{haghverdi2018batch}.
-It is loosely based on the fastMNN method from the batchelor Biocondcutor package \cite{batchelorbioc}.
+It is loosely based on the fastMNN method from the batchelor Bioconductor package \cite{batchelorbioc}.
 \item The rds2cpp library \cite{rds2cpp} implements an RDS file parser/writer as a standalone C++ library.
 Note that this can be used without linking to R itself. 
 \end{itemize}
@@ -181,7 +181,7 @@ Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain \c
 allowing applications to perform scRNA-seq-related calculations from JavaScript by calling scran.js functions. 
 The same libraries can also be used in other web applications via a standard NPM installation, 
 or outside the browser if a suitable Wasm runtime environment is available.
-For example, the bakana library wraps scran.js functions into an analysis pipeline for ``one-click'' execution in both the browser and Node.js envrionments.
+For example, the bakana library wraps scran.js functions into an analysis pipeline for ``one-click'' execution in both the browser and Node.js environments.
 
 To evaluate the efficiency of our Wasm strategy, 
 we compared a kana analysis in the browser to that of a native executable compiled from the same C++ libraries \cite{scrancli}.
@@ -274,7 +274,7 @@ A similar strategy is applied to row indices for non-zero elements in a sparse m
 This gives a theoretical usage of 3 bytes per non-zero element, e.g., a dataset with 30,000 genes and 100,000 cells at 5\% density requires around 500 MB of memory in this data structure.
 
 The layered matrix representation is implemented through the delayed binding mechanism in tatami.
-Specifically, we create the individual sparse submatrices and then create an abstract represention of the full matrix where the submatrices are combined by row.
+Specifically, we create the individual sparse submatrices and then create an abstract representation of the full matrix where the submatrices are combined by row.
 This preserves the memory-efficient representation while presenting an interface that mimics that of a single matrix.
 The layered representation can then be seamlessly used with all C++ code compatible with the tatami interface.
 (Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.)
