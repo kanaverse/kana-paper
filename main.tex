@@ -1,5 +1,5 @@
 \documentclass{article}
-\title{Single-cell data analysis in the browser}
+\title{Powering single-cell analyses with WebAssembly}
 \usepackage{authblk}
 \usepackage{hyperref}
 \usepackage{graphicx}
@@ -13,7 +13,7 @@
 \begin{document}
 \maketitle
 
-\newcommand{\jay}[1]{\textcolor{red}{#1}}
+\newcommand{\pending}[1]{\textcolor{red}{#1}}
 
 \begin{abstract}
 We present kana, a web application for interactive single-cell RNA-seq (scRNA-seq) data analysis in the browser.
@@ -39,22 +39,20 @@ Most obviously, we do not need a scalable backend server to perform any of the c
 As the entire analysis is performed on the client machine, we avoid any data transfer - this reduces latency in the user interface and circumvents concerns over data ownership and privacy.
 Finally, we do not require installation of any data analysis environments like R or Python, ensuring that the analyses are accessible to audiences of varying computational skill.
 
-Some prior work already exists to realize these client-side benefits for bioinformatics data analysis.
-For example, the BioJS registry hosts JavaScript components for handling biological data \cite{gomez2013biojs}, many of which focus on DNA and protein sequence analysis.
+Some existing web applications have successfully realized the benefits of client-side compute for bioinformatics data analysis.
+The BioJS registry hosts JavaScript components for handling biological data \cite{gomez2013biojs}, many of which focus on DNA and protein sequence analysis.
 The BrowserGenome.org application performs read alignment and transcript quantification for RNA sequencing data \cite{schmid2015browsergenome},
 while the ubit2 application analyzes single-cell quantitative polymerase chain reaction datasets \cite{fan2017ubit2};
 both use JavaScript implementations of the relevant algorithms to run in the browser.
-However, these are exceptions to the rule; most bioinformatics web applications only use the browser to visualize results that were computed elsewhere,
+However, these are exceptions to the rule, and most bioinformatics web applications only use the browser to visualize results that were computed elsewhere,
 e.g., cellxgene \cite{megill2021cellxgene}, Epiviz \cite{chelaru2014epiviz}, Cirrocumulus \cite{cirrocumulus}, Vitessce \cite{vitessce}, HiGlass \cite{kerpedjiev2018higlass} and every R/Shiny application ever \cite{shiny}.
-This state of affairs is not unexpected - 
-after all, JavaScript is not widely recognized as a language for data science, nor it is particularly efficient for such tasks.
 
-The client-side paradigm is especially appealing for single-cell genomics due to the exploratory nature of its data analysis.
+The client-side paradigm holds great potential for single-cell genomics due to the exploratory nature of its data analysis.
 Most use cases for single-cell sequencing involve identifying new cell subpopulations or states from heterogeneous biological samples \cite{stegle2015computational},
 which requires several iterations of data analysis, visualization and interpretation.
 If the compute could be performed in the browser, the results could be immediately rendered on a web page for a seamless transition between analysis and interactive exploration.
-However, this is complicated by the size of the datasets, each of which involves tens of thousands of genes and up to millions of cells;
-and the paucity of browser-compatible implementations of relevant algorithms, most of which are written in R or Python.
+Of course, this is complicated by the size of the datasets, each of which involves tens of thousands of genes and up to millions of cells;
+and the lack of browser-compatible implementations of various algorithms, most of which are written in R or Python.
 
 We present kana, a web application for single-cell RNA-seq (scRNA-seq) data analysis inside the browser.
 kana provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
@@ -87,16 +85,19 @@ This yields a few top PCs that capture the heterogeneity of the data in a compre
 \item For datasets containing multiple batches, we remove effects between cells from different samples using mutual nearest neighbors (MNN) correction \cite{haghverdi2018batch}. 
 This can also be used to integrate multiple datasets based on their set of shared features.
 \item We apply clustering techniques on the top PCs to generate discrete subpopulations.
-By default, this uses multi-level (i.e., ``louvain'') community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
+By default, this uses various flavors of community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
 We also support k-means clustering with some user-specified choice of the number of clusters.
 \item Each cluster is characterized through differential expression analyses to detect its marker genes.
 Specifically, we perform a series of pairwise comparisons between clusters and summarize the effect sizes into a ranking of potential marker genes for each cluster.
+\item \pending{We perform gene set enrichment analyses on the top markers for each cluster with publicly available collections like the Gene Ontology \cite{ashburner2000go}. 
+We can also compute and visualize per-cell scores for individual gene sets using a PCA-based method \cite{bueno2016comprehensive}.}
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
 \item We can optionally annotate cell types for each computed cluster using the SingleR algorithm \cite{aran2019reference}.
 This is based on labelled reference datasets involving a variety of human and mouse cell types.
-\item For CITE-seq datasets \cite{stoeckius2017simultaneous}, we can combine information from both RNA and protein modalities during clustering and visualization.
+\item For CITE-seq \cite{stoeckius2017simultaneous} and \pending{Perturb-seq datasets \cite{dixit2016perturbseq}}, we can combine information from multiple modalities during clustering and visualization.
 This uses a nearest-neighbor approach to equalize the baseline variance of each modality, though user-specified weights are also supported. 
+Markers are also computed separately for each modality.
 \end{enumerate}
 
 At each step, users can easily customize key parameters (Figure \ref{screenshot:analysis}).
@@ -130,8 +131,9 @@ and the bottom-left panel contains a gallery of miscellaneous plots.}
 \label{screenshot:results}
 \end{figure}
 
-Finally, users can export the analysis parameters and results for later inspection.
-The exported analysis can be quickly reloaded in a new browser session, allowing users to view the results without repeating the computation.
+Finally, users can export the analysis configuration and results for later inspection.
+The exported results can be quickly reloaded in a new browser session, allowing users (or their collaborators) to explore those results without repeating the computation.
+\pending{Similarly, the exported configuration can be used to restore the analysis session for further iteration.}
 
 \section{Client-side computation}
 
@@ -159,7 +161,7 @@ The Hartigan-Wong implementation was translated from the Fortran code used by R'
 We also provide several initialization methods including kmeans++ \cite{vassilvitskii2006kmeanspp} and PCA partitioning \cite{su2007search}.
 \item The knncolle library \cite{knncolle} wraps several nearest neighbor detection algorithms in a consistent interface. 
 This includes exact methods like vantage point tree search \cite{yianilos1993data} as well as approximate methods like Annoy \cite{annoy}.
-It is based on the BiocNeighbors package from Bioconductor \cite{biocneighbors}.
+Its design is based on the BiocNeighbors package from Bioconductor \cite{biocneighbors}.
 \item The libscran library \cite{libscran} implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
 The code here originates from the scran, scuttle and scater packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
 This library relies on the igraph C library \cite{csardi2006igraph} for community detection from the SNN graph.
@@ -173,7 +175,7 @@ This is derived from code in the SingleR Bioconductor package.
 \item The CppMnnCorrect library \cite{cppmnncorrect} implements the MNN method fo batch correction \cite{haghverdi2018batch}.
 It is loosely based on the fastMNN method from the batchelor Bioconductor package \cite{batchelorbioc}.
 \item The rds2cpp library \cite{rds2cpp} implements an RDS file parser/writer as a standalone C++ library.
-Note that this can be used without linking to R itself. 
+This allows kana to read datasets from RDS files without linking to R itself. 
 \end{itemize}
 
 We created the scran.js library \cite{scran.js} to provide JavaScript bindings to these C++ libraries.
@@ -277,7 +279,7 @@ The layered matrix representation is implemented through the delayed binding mec
 Specifically, we create the individual sparse submatrices and then create an abstract representation of the full matrix where the submatrices are combined by row.
 This preserves the memory-efficient representation while presenting an interface that mimics that of a single matrix.
 The layered representation can then be seamlessly used with all C++ code compatible with the tatami interface.
-(Note that the genes are permuted from their supplied order, which requires some extra attention in downstream analyses.)
+(Note that the genes are permuted from their input order, which requires some extra attention in downstream analyses.)
 
 \subsection{Examining memory usage}
 
@@ -332,7 +334,9 @@ A more complex example involves the detection of new marker genes for a custom s
 Users can create a custom selection by brushing on regions of interest in the embedding panel.
 If this selection is saved, kana will perform a differential expression analysis to detect upregulation inside the selection compared to all other cells.
 Statistics for each gene are then shown in the marker table for examination.
-Each custom selection and its statistics are treated as part of the analysis state and are saved during export. In addition, kana  provides versus mode to compare markers between two clusters or between two custom selections, to identify subtle differences between closely related groups of cells.
+Each custom selection and its statistics are treated as part of the analysis state and are saved during export. 
+In addition, kana provides a ``versus'' mode to compute markers for a comparison between two clusters or between two custom selections.
+This enable users to identify subtle differences between two closely related groups of cells.
 
 Inspired by the gallery in Cirrocumulus, users can save specific views of the embeddings for later perusal.
 This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
@@ -353,6 +357,16 @@ We do so by extracting the coordinates at regular intervals and rendering them o
 effectively creating an animation of the embedding as it is refined over time.
 This is mostly present for entertainment value but may provide some educational insights into the process of creating the embeddings (e.g., early exaggeration for t-SNE).
 
+\subsection{Exploration mode}
+
+\pending{kana provides an ``exploration mode'' for datasets that contain pre-computed results.
+In this mode, many of the analysis steps are skipped as their results are already available inside the dataset file.
+For example, we can extract the reduced dimensions from the ``reducedDims'' slot of a SingleCellExperiment contained inside an RDS file, or from the ``obsm'' group of a H5AD file.
+Similarly, we can extract clustering results from the column annotations of these representations.
+This functionality allows users to explore analysis results using the kana's interface without waiting for an unnecessary re-analysis.
+The exceptions are that of marker detection and gene set enrichment, which are computed on demand based on user interaction;
+this is acceptable as these steps are relatively cheap and their results are often absent from many representations.}
+
 % \subsection{Accelerated graphics with WebGL}
 % 
 % WebGL is a JavaScript application programming interface (API) for efficient rendering of interactive graphics in the browser.
@@ -365,18 +379,22 @@ This is mostly present for entertainment value but may provide some educational 
 
 \subsection{Exporting and reloading}
 
-Users can choose to export their analyses to the browser's cache via its in-built IndexedDB database system.
-This dumps the analysis state (i.e., parameters and results) into a Gzip-compressed JSON inside the cache, along with the input data files.
-Users can then reload their analysis in a new browser session without needing to keep track of any files.
-Moreover, kana will attempt to deduplicate input files in the cache based on the file name, size and MD5 checksum.
-This reduces disk usage when storing multiple analysis states for the same dataset. 
+\pending{Users save their analysis configuration to the browser's cache via the IndexedDB system.
+This dumps the analysis parameters into a JSON file inside the cache, along with the input data files.
+kana will attempt to deduplicate input files in the cache based on the file name, size and MD5 checksum.
+This reduces disk usage when storing multiple analysis states for the same dataset.
+Users can then reload their saved configurations in a new browser session with a single click.}
 
-Alternatively, users may export the analysis state to a file that is downloaded to their machine.
-This creates a single binary file containing the Gzip-compressed analysis state and the embedded input files.
+\pending{Alternatively, users may export the analysis configuration and input files into a Zip archive that is downloaded to their machine.
 Supplying this file to kana will then restore the previous analysis in the same manner as using the browser cache.
 The benefit of this approach is that files exported by one user can be reloaded by other users on different machines,
-allowing users to easily share their analyses with each other by simply transferring the relevant files.
-In fact, computationally savvy users can even parse the kana-exported file in other programming frameworks (e.g., R, Python) for custom processing.
+allowing users to easily share their configurations with each other by simply transferring the Zip file.}
+
+\pending{Finally, users can export the analysis results into the ArtifactDB format (\url{https://github.com/ArtifactDB}).
+Briefly, this creates a language-agnostic representation of Bioconductor's SingleCellExperiment object using a combination of HDF5 and CSV files.
+This representation can be loaded into the user's programming framework of choice for further analyses with other tools.
+For example, the alabaster Bioconductor package \cite{lun2023alabaster} will reconstitute a SingleCellExperiment from the kana-exported files.
+The same files can also be imported into kana's exploration mode for further inspection in the browser.}
 
 \section{Discussion}
 
@@ -409,8 +427,8 @@ For example, the scran.chan package \cite{scranchan} allows users to repeat the 
 where there are no restrictions on memory usage or thread utilization.
 The same approach can be used for other languages that support a foreign function interface like Python or Julia.
 Indeed, one could use the wrapped C++ libraries to run large analyses on a sufficiently provisioned backend, 
-export the analysis state in a kana-compatible file format,
-and then serve the exported state to client machines for exploration in the browser. 
+export the results in a kana-compatible file format,
+and then serve the exported results to client machines for exploration in the browser. 
 
 Future work will involve extending kana to handle other common tasks in scRNA-seq data analysis,
 namely batch correction \cite{haghverdi2018batch} and cell type assignment \cite{aran2019reference}.
