@@ -1,5 +1,5 @@
 \documentclass{article}
-\title{Powering single-cell analyses with WebAssembly}
+\title{Powering single-cell analyses in the browser with WebAssembly}
 \usepackage{authblk}
 \usepackage{hyperref}
 \usepackage{graphicx}
@@ -16,11 +16,11 @@
 \newcommand{\pending}[1]{\textcolor{red}{#1}}
 
 \begin{abstract}
-We present kana, a web application for interactive single-cell RNA-seq (scRNA-seq) data analysis in the browser.
+We present kana, a web application for interactive single-cell `omics data analysis in the browser.
 Like, literally, in the browser:
 kana leverages web technologies such as WebAssembly to efficiently perform the relevant computations on the user's machine,
 avoiding the need to provision and maintain a backend service. 
-The application provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis, 
+The application provides a streamlined one-click workflow for the main steps in a typical single-cell analysis, 
 starting from a count matrix and finishing with marker detection.
 Results are presented in an intuitive web interface for further exploration and iterative analysis. 
 Testing on public datasets shows that kana can analyze over 100,000 cells within 5 minutes on a typical laptop.
@@ -54,9 +54,9 @@ If the compute could be performed in the browser, the results could be immediate
 Of course, this is complicated by the size of the datasets, each of which involves tens of thousands of genes and up to millions of cells;
 and the lack of browser-compatible implementations of various algorithms, most of which are written in R or Python.
 
-We present kana, a web application for single-cell RNA-seq (scRNA-seq) data analysis inside the browser.
-kana provides a streamlined one-click workflow for all steps in a typical scRNA-seq analysis \cite{amezquita2020orchestrating}, 
-starting from a count matrix and finishing with marker detection.
+We present kana, a web application for analyzing single-cell `omics data inside the browser.
+kana provides a streamlined one-click workflow for the main steps in a typical single-cell analysis \cite{amezquita2020orchestrating}, 
+starting from a count matrix (or multiple such matrices, for datasets with multiple modalities and/or samples) and finishing with marker detection.
 Users can interactively explore the low-dimensional embeddings, clusterings and marker genes in an intuitive graphical interface that encourages iterative re-analysis.
 Once finished, users can save their analysis and results for later examination or sharing with collaborators.
 By using technologies like WebAssembly and web workers, we achieve high-performance compute for datasets containing hundreds of thousands of cells.
@@ -66,18 +66,20 @@ Developers can set up their own deployments by following the instructions at \ur
 
 \section{Application overview}
 
-Given a scRNA-seq dataset, kana implements a routine analysis with the steps listed below.
+Given a single-cell dataset - typically for gene expression, but possibly with protein and/or CRISPR counts - kana implements a routine analysis with the steps listed below.
 We will not discuss the statistical and scientific rationale behind each step in much detail as this has been covered elsewhere \cite{oscabook}.
 
 \begin{enumerate}
-\item We import a gene-by-cell count matrix from the user's machine, typically in the form of Matrix Market files such as those produced by the Cellranger pipeline.
-We also support HDF5 files, using either the 10X HDF5 feature barcode matrix format or as H5AD files; 
+\item We import a feature-by-cell count matrix from the user's machine.
+This can take the form of Matrix Market files such as those produced by the Cellranger pipeline;
+HDF5 files, using either the 10X HDF5 feature barcode matrix format or as H5AD files; 
 SummarizedExperiment or SingleCellExperiment objects \cite{amezquita2020orchestrating} saved to RDS files;
 or datasets from public repositories like Bioconductor's ExperimentHub \cite{morgan2019experimenthub}.
 \item We compute common quality control (QC) metrics such as the total count, number of detected genes and proportion of mitochondrial counts.
 Low-quality cells are defined as those cells with outlier values for any of these metrics; these are filtered out from subsequent steps.
 \item We perform scaling normalization based on the library size to remove cell-specific biases.
 This is followed by a log-transformation to obtain a matrix of log-normalized expression values.
+For ADT counts, this uses a grouping approach to reduce the impact of composition biases \cite{lun2016pooling}.
 \item We fit a LOWESS trend \cite{cleveland1979robust} to the per-gene variances with respect to the means, computed from the log-expression values.
 We sort on the residuals to define a subset of highly variable genes (HVGs). 
 \item We perform principal components analysis (PCA) on the log-expression matrix with the subset of HVGs.
@@ -85,10 +87,11 @@ This yields a few top PCs that capture the heterogeneity of the data in a compre
 \item For datasets containing multiple batches, we remove effects between cells from different samples using mutual nearest neighbors (MNN) correction \cite{haghverdi2018batch}. 
 This can also be used to integrate multiple datasets based on their set of shared features.
 \item We apply clustering techniques on the top PCs to generate discrete subpopulations.
-By default, this uses various flavors of community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
+By default, this uses \pending{various flavors of} community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
 We also support k-means clustering with some user-specified choice of the number of clusters.
 \item Each cluster is characterized through differential expression analyses to detect its marker genes.
 Specifically, we perform a series of pairwise comparisons between clusters and summarize the effect sizes into a ranking of potential marker genes for each cluster.
+Users can also directly compare two clusters of interest to characterize differences between two closely related groups of cells.
 \item \pending{We perform gene set enrichment analyses on the top markers for each cluster with publicly available collections like the Gene Ontology \cite{ashburner2000go}. 
 We can also compute and visualize per-cell scores for individual gene sets using a PCA-based method \cite{bueno2016comprehensive}.}
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
@@ -162,7 +165,7 @@ We also provide several initialization methods including kmeans++ \cite{vassilvi
 \item The knncolle library \cite{knncolle} wraps several nearest neighbor detection algorithms in a consistent interface. 
 This includes exact methods like vantage point tree search \cite{yianilos1993data} as well as approximate methods like Annoy \cite{annoy}.
 Its design is based on the BiocNeighbors package from Bioconductor \cite{biocneighbors}.
-\item The libscran library \cite{libscran} implements high-level methods for scRNA-seq data analysis, ranging from quality control to clustering.
+\item The libscran library \cite{libscran} implements high-level methods for single-cell RNA sequencing (scRNA-seq) data analysis, ranging from quality control to clustering.
 The code here originates from the scran, scuttle and scater packages \cite{lun2016step,lun2017scater} bundled together into a single C++ library for convenience. 
 This library relies on the igraph C library \cite{csardi2006igraph} for community detection from the SNN graph.
 \item The qdtsne library \cite{qdtsne} contains a C++ implementation of the Barnes-Hut t-SNE algorithm \cite{maaten2014accelerating}.
@@ -180,7 +183,7 @@ This allows kana to read datasets from RDS files without linking to R itself.
 
 We created the scran.js library \cite{scran.js} to provide JavaScript bindings to these C++ libraries.
 Specifically, we compiled our C++ code to Wasm using the Emscripten toolchain \cite{zakai2011emscripten},
-allowing applications to perform scRNA-seq-related calculations from JavaScript by calling scran.js functions. 
+allowing applications to perform single-cell-related calculations from JavaScript by calling scran.js functions. 
 The same libraries can also be used in other web applications via a standard NPM installation, 
 or outside the browser if a suitable Wasm runtime environment is available.
 For example, the bakana library wraps scran.js functions into an analysis pipeline for ``one-click'' execution in both the browser and Node.js environments.
@@ -333,13 +336,11 @@ Users can also adjust the color gradient to improve contrast and highlight diffe
 A more complex example involves the detection of new marker genes for a custom selection of cells.
 Users can create a custom selection by brushing on regions of interest in the embedding panel.
 If this selection is saved, kana will perform a differential expression analysis to detect upregulation inside the selection compared to all other cells.
-Statistics for each gene are then shown in the marker table for examination.
+Statistics for each gene are then shown in the marker table for examination, \pending{with an additional option to perform gene set enrichment analyses on the top markers}.
 Each custom selection and its statistics are treated as part of the analysis state and are saved during export. 
-In addition, kana provides a ``versus'' mode to compute markers for a comparison between two clusters or between two custom selections.
-This enable users to identify subtle differences between two closely related groups of cells.
 
-Inspired by the gallery in Cirrocumulus, users can save specific views of the embeddings for later perusal.
-This is useful for simultaneously viewing multiple plots colored by different marker genes to characterize complex populations.
+Inspired by the gallery in Cirrocumulus \cite{cirrocumulus}, users can save specific views of the embeddings for later perusal.
+This is useful for simultaneously viewing multiple plots colored by different marker genes to identify cell populations.
 
 \subsection{Progressive rendering}
 
@@ -430,11 +431,8 @@ Indeed, one could use the wrapped C++ libraries to run large analyses on a suffi
 export the results in a kana-compatible file format,
 and then serve the exported results to client machines for exploration in the browser. 
 
-Future work will involve extending kana to handle other common tasks in scRNA-seq data analysis,
-namely batch correction \cite{haghverdi2018batch} and cell type assignment \cite{aran2019reference}.
-We will also factor out kana's graphical elements into custom Web Components for re-use across multiple applications. 
-Of greatest interest, though, will be the continued evolution of web technologies -
-this includes further optimizations to the Wasm specification and its implementations,
+Future work will involve adapting kana to take advantage of the continued evolution of web technologies.
+This includes further optimizations to the Wasm specification and its implementations,
 as well as upcoming standards like WebGPU to leverage graphics hardware for general computation.
 By incorporating these advances, applications like kana can extend the capabilities of the browser for compute-intensive bioinformatics in the client.
 
