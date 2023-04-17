@@ -1,4 +1,4 @@
-# scran.js: the manuscript 
+# Manuscript for kana
 
 This repository contains the manuscript describing the [**kana**](https://github.com/jkanche/kana) web application 
 and the associated [**scran.js**](https://github.com/jkanche/scran.js) Javascript library.
