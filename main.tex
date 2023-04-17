@@ -1,14 +1,16 @@
 \documentclass{article}
 \title{Powering single-cell analyses in the browser with WebAssembly}
-\usepackage{authblk}
+\usepackage[affil-it]{authblk}
 \usepackage{hyperref}
 \usepackage{graphicx}
 \usepackage{multirow}
 \usepackage{color}
 
-\author[1]{Aaron Lun}
+\author[1,*,!]{Aaron Lun}
 \affil[1]{Genentech, Inc. South San Francisco, CA}
-\author[1]{Jayaram Kancherla}
+\affil[*]{Authors contributed equally to this work.}
+\affil[!]{Corresponding author at luna@gene.com}
+\author[1,*]{Jayaram Kancherla}
 
 \begin{document}
 \maketitle
@@ -448,6 +450,12 @@ For brevity, we will omit the various C++ libraries that have been listed previo
 \item All datasets used here can be downloaded from \url{https://github.com/kanaverse/random-test-files}.
 \item Benchmarking code and results are available at \url{https://github.com/kanaverse/kana.perf}.
 \end{itemize}
+
+\section{Author contributions}
+Both authors were involved in the conception and design of this application.
+AL developed the C++ libraries and most of the Javascript bindings.
+JK wrote the kana application itself, including the user interface and the various visual components.
+Both authors were involved in the writing of this manuscript.
 
 \bibliography{ref.bib}
 \bibliographystyle{plain}
