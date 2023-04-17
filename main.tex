@@ -13,8 +13,6 @@
 \begin{document}
 \maketitle
 
-\newcommand{\pending}[1]{\textcolor{red}{#1}}
-
 \begin{abstract}
 We present kana, a web application for interactive single-cell `omics data analysis in the browser.
 Like, literally, in the browser:
@@ -87,18 +85,18 @@ This yields a few top PCs that capture the heterogeneity of the data in a compre
 \item For datasets containing multiple batches, we remove effects between cells from different samples using mutual nearest neighbors (MNN) correction \cite{haghverdi2018batch}. 
 This can also be used to integrate multiple datasets based on their set of shared features.
 \item We apply clustering techniques on the top PCs to generate discrete subpopulations.
-By default, this uses \pending{various flavors of} community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
+By default, this uses various flavors of community detection on a shared nearest neighbor (SNN) graph where each cell is a node and edges connect neighboring cells.
 We also support k-means clustering with some user-specified choice of the number of clusters.
 \item Each cluster is characterized through differential expression analyses to detect its marker genes.
 Specifically, we perform a series of pairwise comparisons between clusters and summarize the effect sizes into a ranking of potential marker genes for each cluster.
 Users can also directly compare two clusters of interest to characterize differences between two closely related groups of cells.
-\item \pending{We perform gene set enrichment analyses on the top markers for each cluster with publicly available collections like the Gene Ontology \cite{ashburner2000go}. 
-We can also compute and visualize per-cell scores for individual gene sets using a PCA-based method \cite{bueno2016comprehensive}.}
+\item We perform gene set enrichment analyses on the top markers for each cluster with publicly available collections like the Gene Ontology \cite{ashburner2000go}. 
+We can also compute and visualize per-cell scores for individual gene sets using a PCA-based method \cite{bueno2016comprehensive}.
 \item We perform further dimensionality reduction on the top PCs to obtain two-dimensional embeddings for visualization. 
 This includes the usual t-distributed stochastic neighbor embedding (t-SNE) and uniform manifold approximation and projection (UMAP) \cite{maaten2014accelerating,mcinnes2018umap}.
 \item We can optionally annotate cell types for each computed cluster using the SingleR algorithm \cite{aran2019reference}.
 This is based on labelled reference datasets involving a variety of human and mouse cell types.
-\item For CITE-seq \cite{stoeckius2017simultaneous} and \pending{Perturb-seq datasets \cite{dixit2016perturbseq}}, we can combine information from multiple modalities during clustering and visualization.
+\item For CITE-seq \cite{stoeckius2017simultaneous} and Perturb-seq datasets \cite{dixit2016perturbseq}, we can combine information from multiple modalities during clustering and visualization.
 This uses a nearest-neighbor approach to equalize the baseline variance of each modality, though user-specified weights are also supported. 
 Markers are also computed separately for each modality.
 \end{enumerate}
@@ -136,7 +134,7 @@ and the bottom-left panel contains a gallery of miscellaneous plots.}
 
 Finally, users can export the analysis configuration and results for later inspection.
 The exported results can be quickly reloaded in a new browser session, allowing users (or their collaborators) to explore those results without repeating the computation.
-\pending{Similarly, the exported configuration can be used to restore the analysis session for further iteration.}
+Similarly, the exported configuration can be used to restore the analysis session for further iteration.
 
 \section{Client-side computation}
 
@@ -336,7 +334,7 @@ Users can also adjust the color gradient to improve contrast and highlight diffe
 A more complex example involves the detection of new marker genes for a custom selection of cells.
 Users can create a custom selection by brushing on regions of interest in the embedding panel.
 If this selection is saved, kana will perform a differential expression analysis to detect upregulation inside the selection compared to all other cells.
-Statistics for each gene are then shown in the marker table for examination, \pending{with an additional option to perform gene set enrichment analyses on the top markers}.
+Statistics for each gene are then shown in the marker table for examination, with an additional option to perform gene set enrichment analyses on the top markers.
 Each custom selection and its statistics are treated as part of the analysis state and are saved during export. 
 
 Inspired by the gallery in Cirrocumulus \cite{cirrocumulus}, users can save specific views of the embeddings for later perusal.
@@ -360,13 +358,13 @@ This is mostly present for entertainment value but may provide some educational 
 
 \subsection{Exploration mode}
 
-\pending{kana provides an ``exploration mode'' for datasets that contain pre-computed results.
+kana provides an ``exploration mode'' for datasets that contain pre-computed results.
 In this mode, many of the analysis steps are skipped as their results are already available inside the dataset file.
 For example, we can extract the reduced dimensions from the ``reducedDims'' slot of a SingleCellExperiment contained inside an RDS file, or from the ``obsm'' group of a H5AD file.
 Similarly, we can extract clustering results from the column annotations of these representations.
 This functionality allows users to explore analysis results using the kana's interface without waiting for an unnecessary re-analysis.
 The exceptions are that of marker detection and gene set enrichment, which are computed on demand based on user interaction;
-this is acceptable as these steps are relatively cheap and their results are often absent from many representations.}
+this is acceptable as these steps are relatively cheap and their results are often absent from many representations.
 
 % \subsection{Accelerated graphics with WebGL}
 % 
@@ -380,22 +378,22 @@ this is acceptable as these steps are relatively cheap and their results are oft
 
 \subsection{Exporting and reloading}
 
-\pending{Users save their analysis configuration to the browser's cache via the IndexedDB system.
+Users save their analysis configuration to the browser's cache via the IndexedDB system.
 This dumps the analysis parameters into a JSON file inside the cache, along with the input data files.
 kana will attempt to deduplicate input files in the cache based on the file name, size and MD5 checksum.
 This reduces disk usage when storing multiple analysis states for the same dataset.
-Users can then reload their saved configurations in a new browser session with a single click.}
+Users can then reload their saved configurations in a new browser session with a single click.
 
-\pending{Alternatively, users may export the analysis configuration and input files into a Zip archive that is downloaded to their machine.
+Alternatively, users may export the analysis parameters and input files into a Zip archive that is downloaded to their machine.
 Supplying this file to kana will then restore the previous analysis in the same manner as using the browser cache.
 The benefit of this approach is that files exported by one user can be reloaded by other users on different machines,
-allowing users to easily share their configurations with each other by simply transferring the Zip file.}
+allowing users to easily share their configurations with each other by simply transferring the Zip file.
 
-\pending{Finally, users can export the analysis results into the ArtifactDB format (\url{https://github.com/ArtifactDB}).
+Finally, users can export the analysis results into the ArtifactDB format (\url{https://github.com/ArtifactDB}).
 Briefly, this creates a language-agnostic representation of Bioconductor's SingleCellExperiment object using a combination of HDF5 and CSV files.
 This representation can be loaded into the user's programming framework of choice for further analyses with other tools.
 For example, the alabaster Bioconductor package \cite{lun2023alabaster} will reconstitute a SingleCellExperiment from the kana-exported files.
-The same files can also be imported into kana's exploration mode for further inspection in the browser.}
+The same files can also be imported into kana's exploration mode for continued inspection in the browser.
 
 \section{Discussion}
 
