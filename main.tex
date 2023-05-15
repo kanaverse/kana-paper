@@ -175,7 +175,7 @@ Some additional optimizations have been applied to improve scalability.
 This is derived from code in the uwot R package \cite{uwot}.
 \item The SinglePP library \cite {singlepp} contains a C++ implementation of the SingleR algorithm \cite{aran2019reference}.
 This is derived from code in the SingleR Bioconductor package. 
-\item The CppMnnCorrect library \cite{cppmnncorrect} implements the MNN method fo batch correction \cite{haghverdi2018batch}.
+\item The CppMnnCorrect library \cite{cppmnncorrect} implements the MNN method for batch correction \cite{haghverdi2018batch}.
 It is loosely based on the fastMNN method from the batchelor Bioconductor package \cite{batchelorbioc}.
 \item The rds2cpp library \cite{rds2cpp} implements an RDS file parser/writer as a standalone C++ library.
 This allows kana to read datasets from RDS files without linking to R itself. 
@@ -364,7 +364,7 @@ kana provides an ``exploration mode'' for datasets that contain pre-computed res
 In this mode, many of the analysis steps are skipped as their results are already available inside the dataset file.
 For example, we can extract the reduced dimensions from the ``reducedDims'' slot of a SingleCellExperiment contained inside an RDS file, or from the ``obsm'' group of a H5AD file.
 Similarly, we can extract clustering results from the column annotations of these representations.
-This functionality allows users to explore analysis results using the kana's interface without waiting for an unnecessary re-analysis.
+This functionality allows users to explore analysis results using kana's interface without waiting for an unnecessary re-analysis.
 The exceptions are that of marker detection and gene set enrichment, which are computed on demand based on user interaction;
 this is acceptable as these steps are relatively cheap and their results are often absent from many representations.
 
