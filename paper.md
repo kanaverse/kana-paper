@@ -20,7 +20,7 @@ bibliography: ref.bib
 
 # Summary
 
-We present kana, a web application for interactive single-cell `omics data analysis in the browser.
+We present kana, a web application for interactive single-cell 'omics data analysis in the browser.
 Like, literally, in the browser:
 kana leverages web technologies such as WebAssembly to efficiently perform the relevant computations on the user's machine,
 avoiding the need to provision and maintain a backend service. 
@@ -30,20 +30,20 @@ Results are presented in an intuitive web interface for further exploration and 
 
 # Statement of need
 
-Single-cell `omics analyses are often exploratory, involving the identification of new cell subpopulations or states from heterogeneous biological samples [@stegle2015computational].
-This process typically requires several iterations of data analysis, visualization and biological interpretation by domain experts who may not be familiar with programming frameworks for bioinformatics.
-Web applications are an ideal environment for single-cell analyses, providing a user-friendly interface to the underlying analysis pipeline without any installation of additional software (other than a browser).
+Single-cell 'omics analyses is routinely used to identify cell subpopulations or states from heterogeneous biological samples [@stegle2015computational].
+This process is exploratory and typically requires several iterations of data analysis, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
+Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the underlying analysis pipeline without any installation of additional software (other than a browser).
 Most existing web applications for single-cell analysis [@megill2021cellxgene;@cirrocumulus;@shiny] use a traditional server-based architecture,
-where the data is sent to a backend server to compute results that are sent back to the client (i.e., the user's machine) for visualization.
-This obviously requires the provisioning and maintenance of a backend server, which has non-negligible cost, especially if it is to scale to a large number of users.
-It also requires data transfer from the user to the server, which introduces latency in the user experience as well as invoking concerns over data ownership and privacy.
+where data is sent to a backend server to compute results that are returned to the client (i.e., the user's machine) for visualization.
+This obviously requires the deployment of a backend server, which has non-negligible cost when scaled to a large number of users.
+It also requires data transfer from the client to the server, which introduces latency in the user experience as well as invoking concerns over data ownership and privacy.
 
 An alternative paradigm is to perform all the compute on the client device, i.e., "client-side compute".
 This circumvents all the aforementioned issues with a backend server, as data remains local to the user's machine and is analyzed within the browser using JavaScript.
 Some existing web applications have employed this approach for bioinformatics data analysis [@gomez2013biojs;@schmid2015browsergenome;@fan2017ubit2].
 These remain a minority in the application ecosystem, which is not surprising given the paucity of efficient, browser-compatible implementations of various algorithms required for such analyses.
 However, new web technologies such as WebAssembly [@haas2017bringing] have greatly enhanced browsers' capabilities for intensive computation.
-If we could generate a WebAssembly (Wasm) binary with single-cell analysis functionality, we could feasibly repurpose the browser as a self-contained interactive data analysis tool for single-cell `omics.
+If we could generate a WebAssembly (Wasm) binary containing single-cell analysis functionality, we could feasibly repurpose the browser as a self-contained interactive data analysis tool for single-cell 'omics.
 
 To this end, we present kana, a web application for analyzing single-cell `omics data inside the browser (https://www.kanaverse.org/kana).
 kana provides a streamlined one-click workflow for the main steps in a typical single-cell analysis [@amezquita2020orchestrating],
