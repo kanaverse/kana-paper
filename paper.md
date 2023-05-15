@@ -30,18 +30,18 @@ Results are presented in an intuitive web interface for further exploration and 
 
 # Statement of need
 
-Single-cell 'omics analyses is routinely used to identify cell subpopulations or states from heterogeneous biological samples [@stegle2015computational].
-This process is exploratory and typically requires several iterations of data analysis, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
-Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the underlying analysis pipeline without any installation of additional software (other than a browser).
+Single-cell 'omics is routinely used to identify cell subpopulations or states from heterogeneous biological samples [@stegle2015computational].
+This typically involves several iterations of data analysis, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
+Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the analysis workflow without any installation of additional software (other than a browser).
 Most existing web applications for single-cell analysis [@megill2021cellxgene;@cirrocumulus;@shiny] use a traditional server-based architecture,
 where data is sent to a backend server to compute results that are returned to the client (i.e., the user's machine) for visualization.
 This obviously requires the deployment of a backend server, which has non-negligible cost when scaled to a large number of users.
-It also requires data transfer from the client to the server, which introduces latency in the user experience as well as invoking concerns over data ownership and privacy.
+It also requires data transfer from the client to the server, which introduces latency as well as invoking concerns over data ownership and privacy.
 
-An alternative paradigm is to perform all the compute on the client device, i.e., "client-side compute".
-This circumvents all the aforementioned issues with a backend server, as data remains local to the user's machine and is analyzed within the browser using JavaScript.
-Some existing web applications have employed this approach for bioinformatics data analysis [@gomez2013biojs;@schmid2015browsergenome;@fan2017ubit2].
-These remain a minority in the application ecosystem, which is not surprising given the paucity of efficient, browser-compatible implementations of various algorithms required for such analyses.
+An alternative paradigm is to perform all the compute on the client device.
+This "client-side compute" circumvents all of the aforementioned issues with a backend server as data remains local to the user's machine and is analyzed wholly within the browser.
+Some existing web applications have employed this approach for bioinformatics data analysis [@gomez2013biojs;@schmid2015browsergenome;@fan2017ubit2], but these represent a minority in the application ecosystem.
+This is not surprising given the paucity of efficient, browser-compatible implementations of various algorithms required for such analyses.
 However, new web technologies such as WebAssembly [@haas2017bringing] have greatly enhanced browsers' capabilities for intensive computation.
 If we could generate a WebAssembly (Wasm) binary containing single-cell analysis functionality, we could feasibly repurpose the browser as a self-contained interactive data analysis tool for single-cell 'omics.
 
@@ -59,11 +59,11 @@ Users can supply data in several formats, such as Matrix Market files produced b
 HDF5 files, using either the 10X HDF5 feature barcode matrix format or as H5AD files; 
 SummarizedExperiment or SingleCellExperiment objects [@amezquita2020orchestrating] saved to RDS files;
 or datasets from public repositories like Bioconductor's ExperimentHub [@morgan2019experimenthub].
-The entire analysis can then be executed with a single click, though users can easily customize key parameters if desired (Figure \autoref{screenshot:analysis}).
+The entire analysis can then be executed with a single click, though users can easily customize key parameters if desired (\autoref{screenshot:analysis}).
 
 ![Screenshot showing the analysis configuration panel in the kana application.  Clicking "Analyze" will perform the entire analysis.\label{screenshot:analysis}](screenshots/analysis.png)
 
-Once each step of the analysis is complete, kana visualizes its results in a multi-panel layout (Figure \autoref{screenshot:results}).
+Once each step of the analysis is complete, kana visualizes its results in a multi-panel layout (\autoref{screenshot:results}).
 One panel contains a scatter plot for the low-dimensional embeddings, where each cell is a point that is colored by cluster identity or gene expression.
 Another panel contains a table of marker statistics for a selected cluster, where potential marker genes are ranked and filtered according to the magnitude of upregulation over other clusters.
 We also provide a gallery to visualize miscellaneous details such as the distribution of QC metrics.
@@ -71,17 +71,13 @@ We also provide a gallery to visualize miscellaneous details such as the distrib
 ![Screenshot showing the multi-panel layout for results in the kana application. The top-left panel is used for the low-dimensional embeddings, the right panel contains the marker table for a selected cluster, and the bottom-left panel contains a gallery of miscellaneous plots.\label{screenshot:results}](screenshots/results.png)
 
 Once the analysis is complete, users can export the analysis configuration and results for later inspection.
-The exported results can be quickly reloaded in a new browser session, allowing users (or their collaborators) to explore those results without repeating the computation.
-Similarly, the exported configuration can be used to restore the analysis session for further iteration.
-
-kana also provides an "exploration mode" for datasets with pre-computed results.
-In this mode, most analysis steps are skipped as their results are already available inside the dataset file.
-For example, we can extract the reduced dimensions from the `reducedDims` slot of a SingleCellExperiment or from the `obsm` group of a H5AD file.
-This allows users to explore existing results using kana's interface without waiting for an unnecessary re-analysis.
+The exported results can be quickly reloaded in a new browser session, allowing users or their collaborators to explore existing results without repeating the computation.
+Indeed, kana's "explore-only" mode can be used more generally for single-cell analysis results in other formats, e.g., to load RDS or H5AD files containing pre-computed clusterings and low-dimensional embeddings.
+Similarly, the exported configuration can be used to restore the analysis session for further parameter tuning and iteration.
 
 # Implementation details
 
-Wasm allows us to convert the browser into a compute engine by integrating existing scientific libraries for bioinformatics data analysis - see the biowasm project [@biowasm] for previous efforts in this direction.
+We convert the browser into a compute engine by compiling scientific libraries for bioinformatics data analysis to Wasm - see the biowasm project [@biowasm] for previous efforts in this direction.
 For kana, we created C++ implementations of the data representations or algorithms required for each analysis step:
 
 - tatami [@tatami] provides an abstract interface to different matrix classes, based on ideas in the beachmat [@lun2018beachmat] and DelayedArray [@delayedarray] packages.
