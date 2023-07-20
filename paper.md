@@ -70,7 +70,7 @@ One panel contains a scatter plot for the low-dimensional embeddings, where each
 Another panel contains a table of marker statistics for a selected cluster, where potential marker genes are ranked and filtered according to the magnitude of upregulation over other clusters.
 We also provide a gallery to visualize miscellaneous details such as the distribution of QC metrics.
 
-![Screenshot showing the multi-panel layout for results in the kana application. The top-left panel is used for the low-dimensional embeddings, the right panel contains the marker table for a selected cluster, and the bottom-left panel contains a gallery of miscellaneous plots.\label{screenshot:results}](screenshots/results.png)
+![Screenshot showing the multi-panel layout for results in the kana application. The left panel is used for the low-dimensional embeddings, the middle panel contains the marker table for a selected cluster, and the right panel contains a gallery of miscellaneous plots.\label{screenshot:results}](screenshots/results.png)
 
 Once the analysis is complete, users can export the analysis configuration and results for later inspection.
 The exported results can be quickly reloaded in a new browser session, allowing users or their collaborators to explore existing results without repeating the computation.
