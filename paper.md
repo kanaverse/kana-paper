@@ -114,7 +114,12 @@ kana was able to finish the analysis in under 5 minutes and using less than 3 GB
 
 kana's key innovation lies in its use of modern web technologies to perform the analysis directly in the browser.
 This eliminates the difficulties of software installation and makes the analysis accessible to a non-programming audience.
-At the same time, we retain all the benefits of client-side operations, i.e., no dependence on a backend server, no latency from data transfer, no issues with data ownership, and (effectively) free compute.
+At the same time, we retain all the benefits of client-side operations, namely:
+
+- No dependence on a backend server, which greatly simplifies application deployment and maintenance for developers.
+- No latency from transfer of data and results to/from the server, which yields a more responsive user experience.
+- No issues with data ownership, enabling users to process sensitive datasets in the privacy of their own machine.
+- Effectively free compute, allowing us to pass on those savings, i.e., offer free access to kana for all users.
 
 Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
 Most obviously, we are constrained by the computational resources available on the client machine, which limits the size of any single dataset that can be analyzed by a particular client.
