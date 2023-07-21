@@ -84,7 +84,7 @@ Similarly, the exported configuration can be used to restore the analysis sessio
 
 From a user perspective, kana's interface is quite similiar to those of other single-cell web applications like Cellxgene.
 In fact, most single-cell user interfaces have very similar layouts and functionality due to the commonality of the analysis steps and the standardized nature of the results.
-kana's innovation lies in how the analysis is performed - unlike most other applications, we do not rely on a backend server, but perform the analysis directly on the user's machine.
+kana's novelty comes from how the analysis is performed - unlike most other applications, we do not rely on a backend server, but perform the analysis directly on the user's machine.
 Importantly, this is achieved via the browser and does not require installation of additional software like, e.g., the 10X Genomics Loupe browser.
 
 # Implementation details
