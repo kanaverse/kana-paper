@@ -39,8 +39,8 @@ This analysis is often exploratory in nature as the properties of an interesting
 As a result, each analysis involves several iterations of computation, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
 
 Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the analysis workflow without any installation of additional software (other than a browser).
-Most existing web applications for single-cell analysis [@megill2021cellxgene;@cirrocumulus;@shiny] use a traditional server-based architecture,
-where data is sent to a backend server to compute results that are returned to the client (i.e., the user's machine) for visualization.
+This strategy has been used by tools such as Cellxgene [@megill2021cellxgene], Cirrocumulus [@cirrocumulus], and a variety of R/Shiny applications [@shiny] for processing single-cell data.
+The vast majority of these existing web applications use a traditional server-based architecture, where data is sent to a backend server to compute results that are returned to the client - i.e., the user's machine - for inspection.
 This obviously requires the deployment of a backend server, which has non-negligible cost when scaled to a large number of users.
 It also requires data transfer from the client to the server, which introduces latency as well as invoking concerns over data ownership and privacy.
 
@@ -81,6 +81,11 @@ Once the analysis is complete, users can export the analysis configuration and r
 The exported results can be quickly reloaded in a new browser session, allowing users or their collaborators to explore existing results without repeating the computation.
 Indeed, kana's "explore-only" mode can be used more generally for single-cell analysis results in other formats, e.g., to load RDS or H5AD files containing pre-computed clusterings and low-dimensional embeddings.
 Similarly, the exported configuration can be used to restore the analysis session for further parameter tuning and iteration.
+
+From a user perspective, kana's interface is quite similiar to those of other single-cell web applications like Cellxgene.
+In fact, most single-cell user interfaces have very similar layouts and functionality due to the commonality of the analysis steps and the standardized nature of the results.
+kana's novelty comes from how the analysis is performed - unlike most other applications, we do not rely on a backend server, but perform the analysis directly on the user's machine.
+Importantly, this is achieved via the browser and does not require installation of additional software like, e.g., the 10X Genomics Loupe browser.
 
 # Implementation details
 
