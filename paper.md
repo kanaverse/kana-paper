@@ -39,7 +39,7 @@ This analysis is often exploratory in nature as the properties of an interesting
 As a result, each analysis involves several iterations of computation, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
 
 Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the analysis workflow without any installation of additional software (other than a browser).
-This paradigm has been used by tools such as Cellxgene [@megill2021cellxgene], Cirrocumulus [@cirrocumulus], and a variety of R/Shiny applications [@shiny] for processing single-cell data.
+This strategy has been used by tools such as Cellxgene [@megill2021cellxgene], Cirrocumulus [@cirrocumulus], and a variety of R/Shiny applications [@shiny] for processing single-cell data.
 The vast majority of these existing web applications use a traditional server-based architecture, where data is sent to a backend server to compute results that are returned to the client - i.e., the user's machine - for inspection.
 This obviously requires the deployment of a backend server, which has non-negligible cost when scaled to a large number of users.
 It also requires data transfer from the client to the server, which introduces latency as well as invoking concerns over data ownership and privacy.
