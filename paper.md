@@ -16,7 +16,7 @@ authors:
 affiliations:
   - name: Genentech Inc., South San Francisco, USA
     index: 1
-date: 15 May 2023
+date: 20 July 2023
 bibliography: ref.bib
 ---
 
@@ -32,8 +32,13 @@ Results are presented in an intuitive web interface for further exploration and 
 
 # Statement of need
 
-Single-cell 'omics is routinely used to identify cell subpopulations or states from heterogeneous biological samples [@stegle2015computational].
-This typically involves several iterations of data analysis, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
+Single-cell 'omics is routinely used to identify cell subpopulations from heterogeneous biological samples [@stegle2015computational].
+A typical single-cell analysis aims to find clusters of cells with distinct molecular phenotypes that represent "interesting" cellular states;
+for example, in single cell RNA sequencing (scRNA-seq) studies, cells are clustered based on their transcriptional profiles and each cluster is characterized based on up- or down-regulation of marker genes.
+Changes in expression or cellular abundance between clusters or conditions can then provide some insight into the associated physiological processes.
+This analysis is often exploratory in nature as the properties of an interesting cell type or state are difficult to define _a priori_.
+As a result, each analysis involves several iterations of computation, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
+
 Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the analysis workflow without any installation of additional software (other than a browser).
 Most existing web applications for single-cell analysis [@megill2021cellxgene;@cirrocumulus;@shiny] use a traditional server-based architecture,
 where data is sent to a backend server to compute results that are returned to the client (i.e., the user's machine) for visualization.
