@@ -32,11 +32,10 @@ Results are presented in an intuitive web interface for further exploration and 
 
 # Statement of need
 
-Single-cell 'omics is routinely used to identify cell subpopulations from heterogeneous biological samples [@stegle2015computational].
-A typical single-cell analysis aims to find clusters of cells with distinct molecular phenotypes that represent "interesting" cellular states;
-for example, in single cell RNA sequencing (scRNA-seq) studies, cells are clustered based on their transcriptional profiles and each cluster is characterized based on up- or down-regulation of marker genes.
-Changes in expression or cellular abundance between clusters or conditions can then provide some insight into the associated physiological processes.
-This analysis is often exploratory in nature as the properties of an interesting cell type or state are difficult to define _a priori_.
+Single-cell 'omics is routinely used to identify cell subpopulations with distinct molecular phenotypes in heterogeneous biological samples [@stegle2015computational].
+For example, in single cell RNA sequencing (scRNA-seq), cells are clustered based on their transcriptional profiles and each cluster is characterized based on differential expression of marker genes.
+Changes in expression or cellular abundance for each cluster can then provide some insight into the biological processes associated with the corresponding cell type or state.
+This analysis is often exploratory in nature as the properties of an interesting cell subpopulation are difficult to define _a priori_.
 As a result, each analysis involves several iterations of computation, visualization and interpretation by biologists who may not be familiar with programming frameworks for bioinformatics.
 
 Web applications offer an ideal environment for single-cell analyses, providing a user-friendly interface to the analysis workflow without any installation of additional software (other than a browser).
@@ -73,6 +72,7 @@ The entire analysis can then be executed with a single click, though users can e
 Once each step of the analysis is complete, kana visualizes its results in a multi-panel layout (\autoref{screenshot:results}).
 One panel contains a scatter plot for the low-dimensional embeddings, where each cell is a point that is colored by cluster identity or gene expression.
 Another panel contains a table of marker statistics for a selected cluster, where potential marker genes are ranked and filtered according to the magnitude of upregulation over other clusters.
+This interface allows scientists to explore the heterogeneity in the cell population and to find the biological processes that are most active within each cluster.
 We also provide a gallery to visualize miscellaneous details such as the distribution of QC metrics.
 
 ![Screenshot showing the multi-panel layout for results in the kana application. The left panel is used for the low-dimensional embeddings, the middle panel contains the marker table for a selected cluster, and the right panel contains a gallery of miscellaneous plots.\label{screenshot:results}](screenshots/results.png)
@@ -92,7 +92,7 @@ For kana, we created C++ implementations of the data representations or algorith
 - CppIrlba [@cppirlba] contains a C++ implementation of the IRLBA algorithm [@baglama2005augmented], based on the C code in the irlba R package [@irlba].
 - CppKmeans [@cppkmeans] implements the several algorithms for k-means clustering [@hartiganwong;@lloyd;@vassilvitskii2006kmeanspp@su2007search], based on R's Fortran code.
 - knncolle [@knncolle] wraps several nearest neighbor detection algorithms [@yianilos1993data;@annoy] in a consistent interface, using the same design as the BiocNeighbors package [@biocneighbors].
-- libscran [@libscran] implements high-level methods for single-cell RNA sequencing data analysis based on code from the scran, scuttle and scater packages [@lun2016step;@lun2017scater].
+- libscran [@libscran] implements high-level methods for scRNA-seq data analysis based on code from the scran, scuttle and scater packages [@lun2016step;@lun2017scater].
 - qdtsne [@qdtsne] contains a C++ implementation of the Barnes-Hut t-SNE algorithm [@maaten2014accelerating], refactored and optimized from code in the Rtsne package [@rtsne].
 - umappp [@umappp] contains a C++ implementation of the UMAP algorithm [@mcinnes2018umap], derived from code in the uwot R package [@uwot].
 - SinglePP [@singlepp] contains a C++ implementation of the SingleR algorithm for cell type annotation [@aran2019reference].
@@ -102,7 +102,7 @@ For kana, we created C++ implementations of the data representations or algorith
 We compiled these libraries to a Wasm binary using the Emscripten toolchain [@zakai2011emscripten], using PThreads to enable parallelization via web workers.
 We then wrapped the binary in the scran.js library [@scran.js] to provide JavaScript bindings for use in web applications.
 kana itself was developed using React with extensive use of WebGL for efficient plotting.
-On a moderately sized single-cell RNA sequencing dataset containing over 170,000 cells [@zilionis2019single],
+On a moderately sized scRNA-seq dataset containing over 170,000 cells [@zilionis2019single],
 kana was able to finish the analysis in under 5 minutes and using less than 3 GB of RAM on a consumer laptop.
 
 # Further comments
