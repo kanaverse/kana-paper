@@ -72,7 +72,7 @@ The entire analysis can then be executed with a single click, though users can e
 Once each step of the analysis is complete, kana visualizes its results in a multi-panel layout (\autoref{screenshot:results}).
 One panel contains a scatter plot for the low-dimensional embeddings, where each cell is a point that is colored by cluster identity or gene expression.
 Another panel contains a table of marker statistics for a selected cluster, where potential marker genes are ranked and filtered according to the magnitude of upregulation over other clusters.
-This interface allows scientists to explore the heterogeneity in the cell population and to find the biological processes that are most active within each cluster.
+Scientists can use this interface to examine the cellular heterogeneity in the dataset and to determine which biological processes are most active in each subpopulation.
 We also provide a gallery to visualize miscellaneous details such as the distribution of QC metrics.
 
 ![Screenshot showing the multi-panel layout for results in the kana application. The left panel is used for the low-dimensional embeddings, the middle panel contains the marker table for a selected cluster, and the right panel contains a gallery of miscellaneous plots.\label{screenshot:results}](screenshots/results.png)
