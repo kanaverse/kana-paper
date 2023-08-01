@@ -117,10 +117,16 @@ kana's key innovation lies in its use of modern web technologies to perform the 
 This eliminates the difficulties of software installation and makes the analysis accessible to a non-programming audience.
 At the same time, we retain all the benefits of client-side operations, namely:
 
-- No dependence on a backend server, which greatly simplifies application deployment and maintenance for developers.
+- No dependency on a backend server, which greatly simplifies application deployment and maintenance for developers.
+  For example, we do not need any monitoring, scaling, hardening, or other DevOps processes typically associated with a backend architecture.
 - No latency from transfer of data and results to/from the server, which yields a more responsive user experience.
-- No issues with data ownership, enabling users to process sensitive datasets in the privacy of their own machine.
-- Effectively free compute, allowing us to pass on those savings, i.e., offer free access to kana for all users.
+  In particular, the user does not need to upload large data files (up to 1 GB, depending on the number of cells and sequencing depth), which would otherwise incur a significant delay.
+  Similarly, the app can show results near-instantaneously rather than blocking on multiple network requests of 1-5 MB each.
+- No issues with data ownership, enabling users to process sensitive datasets from the privacy of their own machine.
+  There is no need for users to trust the backend maintainers, as no backend even exists.
+  This is particularly relevant for patient-derived single-cell data - though, neither of us are lawyers, so users should seek their own legal advice here.
+- Effectively free compute, allowing us to pass on those savings to our users, i.e., kana can be used for free.
+  This is possible as each user brings their own computing power to the application, rather than requiring the maintainers to provision resources.
 
 Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
 Most obviously, we are constrained by the computational resources available on the client machine, which limits the size of any single dataset that can be analyzed by a particular client.
