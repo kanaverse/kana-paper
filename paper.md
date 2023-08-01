@@ -124,7 +124,7 @@ At the same time, we retain all the benefits of client-side operations, namely:
   Similarly, the app can show results near-instantaneously rather than blocking on multiple network requests of 1-5 MB each.
 - No issues with data ownership, enabling users to process sensitive datasets from the privacy of their own machine.
   There is no need for users to trust the backend maintainers, as no backend even exists.
-  This is particularly relevant for patient-derived single-cell data - though, neither of us are lawyers, so users should seek their own legal advice here.
+  This is particularly relevant for patient-derived single-cell data, though neither of us are lawyers so users should seek their own legal advice here.
 - Effectively free compute, allowing us to pass on those savings to our users, i.e., kana can be used for free.
   This is possible as each user brings their own computing power to the application, rather than requiring the maintainers to provision resources.
 
