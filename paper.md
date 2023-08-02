@@ -125,18 +125,18 @@ At the same time, we retain all the benefits of client-side operation, namely:
 - No issues with data ownership, enabling users to process sensitive datasets from the privacy of their own machine.
   Users are not forced to trust the application maintainers to correctly handle and secure their datasets.
   This is potentially useful in situations involving commercial secrets or patient data.
-- Effectively free compute, allowing us to pass on those savings to our users, i.e., kana can be used for free.
-  This is possible as each client supplies their own computing power to the application, instead of requiring the maintainers to provision resources.
+- Effectively free compute, as each client brings its own computing power to the application.
+  No funding is required for a centralized backend, allowing us to pass on those savings to our users, i.e., kana can be used by anyone for free.
 
 Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
 Most obviously, we are constrained by the computational resources available on the client machine, which limits the size of any single dataset that can be analyzed by a particular client.
 From another perspective, though, client-side compute is more scalable as it automatically distributes analyses of many datasets across any number of machines at no cost and with no configuration.
-This is especially relevant for web applications like kana where the maintainers would otherwise be responsible for provisioning backend computing resources.
+This is especially relevant for web applications like kana where the maintainers would otherwise be responsible for provisioning more computing resources to match user demand.
 
 That said, how do we deal with large datasets?
 Our C++ implementations mean that we are not limited to computation in the browser.
 We can easily provide wrappers to the same underlying libraries in any client-side framework, e.g., as a command-line tool or as an extension to existing data science ecosystems [@scranchan].
-Indeed, one could use the wrapped C++ libraries to run large analyses on a sufficiently provisioned backend, export the results in a kana-compatible file format, and then serve them to clients for use in kana's exploration mode.
+Indeed, one could use the wrapped C++ libraries to run large analyses on a sufficiently well-resourced backend, export the results in a kana-compatible file format, and then serve them to clients for use in kana's exploration mode.
 
 # Acknowledgements
 
