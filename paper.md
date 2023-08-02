@@ -115,7 +115,7 @@ This was only 30% slower than the equivalent native executable [@scrancli] on th
 
 kana's key innovation lies in its use of modern web technologies to perform the analysis directly in the browser.
 This eliminates the difficulties of software installation and makes the analysis accessible to a non-programming audience.
-At the same time, we retain all the benefits of client-side operations, namely:
+At the same time, we retain all the benefits of client-side operation, namely:
 
 - No dependency on a backend server, which greatly simplifies application deployment and maintenance for developers.
   For example, we do not need any monitoring, scaling, hardening, or other DevOps processes typically associated with a backend architecture.
@@ -123,10 +123,10 @@ At the same time, we retain all the benefits of client-side operations, namely:
   In particular, the user does not need to upload large data files (up to 1 GB, depending on the number of cells and sequencing depth), which would otherwise incur a significant delay.
   Similarly, the app can show results near-instantaneously rather than blocking on multiple network requests of 1-5 MB each.
 - No issues with data ownership, enabling users to process sensitive datasets from the privacy of their own machine.
-  There is no need for users to trust the backend maintainers, as no backend even exists.
-  This is particularly relevant for patient-derived single-cell data, though neither of us are lawyers so users should seek their own legal advice here.
+  Users are not forced to trust the application maintainers to correctly handle and secure their datasets.
+  This is potentially useful in situations involving commercial secrets or patient data.
 - Effectively free compute, allowing us to pass on those savings to our users, i.e., kana can be used for free.
-  This is possible as each user brings their own computing power to the application, rather than requiring the maintainers to provision resources.
+  This is possible as each client supplies their own computing power to the application, instead of requiring the maintainers to provision resources.
 
 Client-side compute has interesting scalability characteristics compared to a traditional backend approach.
 Most obviously, we are constrained by the computational resources available on the client machine, which limits the size of any single dataset that can be analyzed by a particular client.
