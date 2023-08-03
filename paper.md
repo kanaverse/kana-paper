@@ -107,19 +107,17 @@ For kana, we created C++ implementations of the data representations or algorith
 We compiled these libraries to a Wasm binary using the Emscripten toolchain [@zakai2011emscripten], using PThreads to enable parallelization via web workers.
 We then wrapped the binary in the scran.js library [@scran.js] to provide JavaScript bindings for use in web applications.
 kana itself was developed using React with extensive use of WebGL for efficient plotting.
-On a moderately sized scRNA-seq dataset containing over 170,000 cells [@zilionis2019single],
-kana was able to finish the analysis in 4.5 minutes and using less than 3 GB of RAM on a laptop with an Intel Core i7-8850H CPU (2.60GHz, 6 cores) and 32 GB memory running Manjaro Linux.
-This was only 30% slower than the equivalent native executable [@scrancli] on the same machine (3 minutes), indicating that Wasm's promise of near-native execution is feasible.
+Testing with several scRNA-seq datasets indicates that kana isonly 25-50% slower than an equivalent native executable (\autoref{tab:perf}), indicating that Wasm's promise of near-native execution is feasible.
 
-| Dataset                  | Number of cells | kana runtime   | Native runtime | kana memory |
-|--------------------------|-----------------|----------------|----------------|-------------|
-| @zeisel2015cell          | 3005            |    7.00 ± 0.10 |    5.60 ± 0.05 |      148.31 |
-| @paul2015transcriptional | 10368           |   17.59 ± 0.20 |   13.52 ± 0.38 |      224.87 |
-| @bach2017differentiation | 25806           |   54.96 ± 1.13 |   43.33 ± 0.39 |      761.12 |
-| @ernst2019staged         | 68937           |  157.15 ± 7.39 |  114.67 ± 1.86 |     1981.87 |
-| @bacher2020low           | 104417          |  228.02 ± 2.85 |  170.32 ± 1.34 |     2165.94 | 
-| @zilionis2019single      | 173954          |  272.26 ± 4.22 |  183.77 ± 2.46 |     2480.81 |
-:I am a caption.
+| Dataset                  | Cell number | kana runtime   | Native runtime | kana memory |
+|--------------------------|-------------|----------------|----------------|-------------|
+| @zeisel2015cell          | 3005        |    7.00 ± 0.10 |    5.60 ± 0.05 |      148.31 |
+| @paul2015transcriptional | 10368       |   17.59 ± 0.20 |   13.52 ± 0.38 |      224.87 |
+| @bach2017differentiation | 25806       |   54.96 ± 1.13 |   43.33 ± 0.39 |      761.12 |
+| @ernst2019staged         | 68937       |  157.15 ± 7.39 |  114.67 ± 1.86 |     1981.87 |
+| @bacher2020low           | 104417      |  228.02 ± 2.85 |  170.32 ± 1.34 |     2165.94 | 
+| @zilionis2019single      | 173954      |  272.26 ± 4.22 |  183.77 ± 2.46 |     2480.81 |
+:Performance of kana for analyzing different scRNA-seq datasets, compared to a native executable generated from the same C++ libraries. Measurements were taken on a laptop with an Intel Core i7-8850H CPU (2.60GHz, 6 cores) and 32 GB memory running Manjaro Linux. Runtimes are reported in seconds with the mean and standard error across 3 runs. Memory usage is reported in megabytes. See @otherkana for more details.\label{tab:perf}
 
 # Further comments
 
