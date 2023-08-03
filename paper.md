@@ -128,7 +128,7 @@ At the same time, we retain all the benefits of client-side operation, namely:
 - No dependency on a backend server, which greatly simplifies application deployment and maintenance for developers.
   For example, we do not need any monitoring, scaling, hardening, or other DevOps processes typically associated with a backend architecture.
 - No latency from transfer of data and results to/from the server, which yields a more responsive user experience.
-  In particular, uploads of large data files (up to 1 GB, depending on the number of cells and sequencing depth) would incur a significant delay.
+  In particular, uploads of large data files (up to 1 GB, depending on the number of cells and sequencing depth) would cause a significant delay.
 - No issues with data ownership, enabling users to process sensitive datasets from the privacy of their own machine.
   Users are not forced to trust the application maintainers to correctly handle and secure their datasets on the latter's server.
 - Effectively free compute, as each client brings its own computing power to the application.
