@@ -5,7 +5,7 @@ tags:
   - bioinformatics
   - single-cell
 authors:
-  - name: Aaron T. L. Lun
+  - name: Aaron Tin Long Lun
     orcid: 0000-0002-3564-4813
     equal-contrib: true
     affiliation: 1
@@ -14,7 +14,7 @@ authors:
     equal-contrib: true
     affiliation: 1
 affiliations:
-  - name: Genentech Inc., South San Francisco, USA
+  - name: Genentech Inc., South San Francisco, United States of America
     index: 1
 date: 20 July 2023
 bibliography: ref.bib
